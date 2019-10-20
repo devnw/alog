@@ -1,10 +1,18 @@
 package alog
 
 import (
+	"context"
 	"io"
+
+	"github.com/benjivesterby/validator"
 )
 
 type alog struct {
+	ctx     context.Context
+	cancel  context.CancelFunc
+	outputs []io.Writer
+	format  int
+	prefix  string
 }
 
 // Print creates informational logs based on the inputs
@@ -45,7 +53,7 @@ func (l *alog) Error(err error, v ...interface{}) {
 
 }
 
-// Error creates error logs using the error and other values passed in.
+// Errorln creates error logs using the error and other values passed in.
 // Each error and value is printed on a different line
 func (l *alog) Errorln(err error, v ...interface{}) {
 
@@ -104,4 +112,27 @@ func (l *alog) Fatalf(err error, format string, v ...interface{}) {
 // will be added to the different logging outputs for this logger
 func (l *alog) AddOutput(out io.Writer) {
 
+}
+
+// Close cancels the context of the logger internally and breaks out of
+// any logging activity. This should always be called in a defer at the top
+// level where the logger is initialized to ensure proper closure
+func (l *alog) Close() {
+	if validator.IsValid(l) {
+
+		// cancel the context of the logger
+		l.cancel()
+	}
+}
+
+// Validate checks the validity and health of the logger
+// to ensure that it can properly log
+func (l *alog) Validate() (valid bool) {
+	if l != nil && l.ctx != nil && l.cancel != nil {
+		// TODO: ensure there is at least one io.Writer registered and
+		// that the health checks are passing
+		valid = true
+	}
+
+	return valid
 }

@@ -1,6 +1,7 @@
 package alog
 
 import (
+	"context"
 	"io"
 	"os"
 	"time"
@@ -20,11 +21,28 @@ var Location = time.UTC
 
 // Instance is the default logger for library include, this can be replaced by
 // a different default instance and is global to the library
-var Instance = New(std, "", os.Stdout)
+var Instance, _ = New(context.Background(), std, "", os.Stdout)
 
 // New creates a new logger using the information passed in to setup
 // the logging configuration rather than using the standard Stdout logger
 // that is initialized automatically
-func New(format int, prefix string, out ...io.Writer) Logger {
-	return &alog{}
+func New(ctx context.Context, format int, prefix string, out ...io.Writer) (Logger, error) {
+	var err error
+
+	// Setup the logger context
+	var cancel context.CancelFunc
+	ctx, cancel = context.WithCancel(ctx)
+
+	// Initialize the logger struct
+	logger := &alog{
+		ctx:     ctx,
+		cancel:  cancel,
+		outputs: out,
+		format:  format,
+		prefix:  prefix,
+	}
+
+	// TODO: initialize the go routines for reading the logs
+
+	return logger, err
 }
