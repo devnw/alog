@@ -1,7 +1,7 @@
-# go-template-repo
+# alog
 Go Template Repo
 
-[![Build Status](https://api.travis-ci.org/benjivesterby/go-template-repo.svg?branch=master)](https://travis-ci.org/benjivesterby/go-template-repo)
-[![Go Report Card](https://goreportcard.com/badge/github.com/benjivesterby/go-template-repo)](https://goreportcard.com/report/github.com/benjivesterby/go-template-repo)
-[![GoDoc](https://godoc.org/github.com/benjivesterby/go-template-repo?status.svg)](https://godoc.org/github.com/benjivesterby/go-template-repo)
+[![Build Status](https://api.travis-ci.org/benjivesterby/alog.svg?branch=master)](https://travis-ci.org/benjivesterby/alog)
+[![Go Report Card](https://goreportcard.com/badge/github.com/benjivesterby/alog)](https://goreportcard.com/report/github.com/benjivesterby/alog)
+[![GoDoc](https://godoc.org/github.com/benjivesterby/alog?status.svg)](https://godoc.org/github.com/benjivesterby/alog)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
