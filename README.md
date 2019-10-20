@@ -1,5 +1,5 @@
 # alog
-Go Template Repo
+Async Logger for Go
 
 [![Build Status](https://api.travis-ci.org/benjivesterby/alog.svg?branch=master)](https://travis-ci.org/benjivesterby/alog)
 [![Go Report Card](https://goreportcard.com/badge/github.com/benjivesterby/alog)](https://goreportcard.com/report/github.com/benjivesterby/alog)
