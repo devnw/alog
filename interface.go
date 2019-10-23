@@ -7,11 +7,20 @@ type Logger interface {
 	// Print creates informational logs based on the inputs
 	Print(v ...interface{})
 
-	// Println prints the data coming in on individual lines
+	// Println prints the data coming in as an informational log on individual lines
 	Println(v ...interface{})
 
 	// Printf creates an informational log using the format and values
 	Printf(format string, v ...interface{})
+
+	// Debug creates debugging logs based on the inputs
+	Debug(v ...interface{})
+
+	// Debugln prints the data coming in as a debug log on individual lines
+	Debugln(v ...interface{})
+
+	// Debugf creates an debugging log using the format and values
+	Debugf(format string, v ...interface{})
 
 	// Warn creates a warning log using the error passed in along with the
 	// values passed in
@@ -64,4 +73,8 @@ type Logger interface {
 	// AddOutput adds an additional logging source to the logger which
 	// will be added to the different logging outputs for this logger
 	AddOutput(out io.Writer)
+
+	// Close cancels the context throughout the logger and closes
+	// all read / write operations accross the logger and IO
+	Close()
 }

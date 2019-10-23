@@ -3,6 +3,7 @@ package alog
 import (
 	"context"
 	"io"
+	"time"
 
 	"github.com/benjivesterby/validator"
 )
@@ -11,8 +12,24 @@ type alog struct {
 	ctx     context.Context
 	cancel  context.CancelFunc
 	outputs []io.Writer
-	format  int
-	prefix  string
+
+	// location is the timezone that is used for logging. Default: UTC
+	location *time.Location
+
+	// dateformat is the date format that is used in the logging. Default: RFC3339
+	dateformat string
+	format     int
+	prefix     string
+	debug      bool
+
+	// The channel which will have logs sent and received on
+	feed chan log
+}
+
+// init starts up the go routines for receiving and publishing logs
+// to the available io.Writers
+func (l *alog) init() (err error) {
+	return err
 }
 
 // Print creates informational logs based on the inputs
@@ -20,7 +37,7 @@ func (l *alog) Print(v ...interface{}) {
 
 }
 
-// Println prints the data coming in on individual lines
+// Println prints the data coming in as an informational log on individual lines
 func (l *alog) Println(v ...interface{}) {
 
 }
@@ -28,6 +45,27 @@ func (l *alog) Println(v ...interface{}) {
 // Printf creates an informational log using the format and values
 func (l *alog) Printf(format string, v ...interface{}) {
 
+}
+
+// Debug creates debugging logs based on the inputs
+func (l *alog) Debug(v ...interface{}) {
+	if l.debug {
+
+	}
+}
+
+// Debugln prints the data coming in as a debug log on individual lines
+func (l *alog) Debugln(v ...interface{}) {
+	if l.debug {
+
+	}
+}
+
+// Debugf creates an debugging log using the format and values
+func (l *alog) Debugf(format string, v ...interface{}) {
+	if l.debug {
+
+	}
 }
 
 // Warn creates a warning log using the error passed in along with the

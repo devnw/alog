@@ -54,6 +54,58 @@ func TestPrintf(t *testing.T) {
 	}
 }
 
+func TestDebug(t *testing.T) {
+	type args struct {
+		v []interface{}
+	}
+	tests := []struct {
+		name string
+		args args
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			Debug(tt.args.v...)
+		})
+	}
+}
+
+func TestDebugln(t *testing.T) {
+	type args struct {
+		v []interface{}
+	}
+	tests := []struct {
+		name string
+		args args
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			Debugln(tt.args.v...)
+		})
+	}
+}
+
+func TestDebugf(t *testing.T) {
+	type args struct {
+		format string
+		v      []interface{}
+	}
+	tests := []struct {
+		name string
+		args args
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			Debugf(tt.args.format, tt.args.v...)
+		})
+	}
+}
+
 func TestWarn(t *testing.T) {
 	type args struct {
 		err error
