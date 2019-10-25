@@ -70,11 +70,22 @@ type Logger interface {
 	// After logging the fatal log the Fatalf method throws a panic to crash the application
 	Fatalf(err error, format string, v ...interface{})
 
+	// Custom creates a custom log using the error and values passed into the method
+	Custom(ltype string, err error, v ...interface{})
+
+	// Customln creates custom logs using the error and other values passed in.
+	// Each error and value is printed on a different line
+	Customln(ltype string, err error, v ...interface{})
+
+	// Customf creates a custom log using the error passed in, along with the string
+	// formatting and values
+	Customf(ltype string, err error, format string, v ...interface{})
+
 	// AddOutput adds an additional logging source to the logger which
 	// will be added to the different logging outputs for this logger
 	AddOutput(out io.Writer)
 
 	// Close cancels the context throughout the logger and closes
-	// all read / write operations accross the logger and IO
+	// all read / write operations across the logger and IO
 	Close()
 }

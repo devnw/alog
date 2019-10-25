@@ -8,22 +8,29 @@ import (
 	"github.com/benjivesterby/validator"
 )
 
+// TODO: Setup so that new destinations can be added at runtime (chan Dest)
+// TODO: flag for stack traces on logs with errors?
+
 type alog struct {
-	ctx     context.Context
-	cancel  context.CancelFunc
-	outputs []io.Writer
+	ctx          context.Context
+	cancel       context.CancelFunc
+	destinations []Dest
 
 	// location is the timezone that is used for logging. Default: UTC
 	location *time.Location
 
 	// dateformat is the date format that is used in the logging. Default: RFC3339
 	dateformat string
-	format     int
 	prefix     string
-	debug      bool
+	logdebug   bool
 
-	// The channel which will have logs sent and received on
-	feed chan log
+	// The channels which will have logs sent and received on
+	info  chan log
+	debug chan log
+	warn  chan log
+	err   chan log
+	crit  chan log
+	fatal chan log
 }
 
 // init starts up the go routines for receiving and publishing logs
@@ -49,21 +56,21 @@ func (l *alog) Printf(format string, v ...interface{}) {
 
 // Debug creates debugging logs based on the inputs
 func (l *alog) Debug(v ...interface{}) {
-	if l.debug {
+	if l.logdebug {
 
 	}
 }
 
 // Debugln prints the data coming in as a debug log on individual lines
 func (l *alog) Debugln(v ...interface{}) {
-	if l.debug {
+	if l.logdebug {
 
 	}
 }
 
 // Debugf creates an debugging log using the format and values
 func (l *alog) Debugf(format string, v ...interface{}) {
-	if l.debug {
+	if l.logdebug {
 
 	}
 }
@@ -144,6 +151,20 @@ func (l *alog) Fatalf(err error, format string, v ...interface{}) {
 
 	// TODO: Update panic to include information about the fatal, as well as stack trace information
 	panic(err)
+}
+
+// Custom creates a custom log using the error and values passed into the method
+func (l *alog) Custom(ltype string, err error, v ...interface{}) {
+}
+
+// Customln creates custom logs using the error and other values passed in.
+// Each error and value is printed on a different line
+func (l *alog) Customln(ltype string, err error, v ...interface{}) {
+}
+
+// Customf creates a custom log using the error passed in, along with the string
+// formatting and values
+func (l *alog) Customf(ltype string, err error, format string, v ...interface{}) {
 }
 
 // AddOutput adds an additional logging source to the logger which

@@ -3,8 +3,6 @@ package alog
 import (
 	"context"
 	"errors"
-	"io"
-	"os"
 	"sync"
 	"time"
 
@@ -12,9 +10,39 @@ import (
 )
 
 const (
-	std   = 1 << iota // use a standard logging scheme without adding delimits
-	delim             // use a delimited logging scheme using a delimiter format
-	json              // marshal composite structs to json for logging
+	// STD uses a standard logging scheme without adding delimits
+	STD = 0
+
+	// DELIM uses a delimited logging scheme using a delimiter format. DEFAULT: csv
+	DELIM = 1
+
+	// JSON marshals composite structs to json for logging
+	JSON = 2
+)
+
+// Log switches for sources setup using bitwise comparision
+const (
+	// INFO is the flag for logging informational logs on a destination
+	INFO = 1 << iota
+
+	// DEBUG is the flag for logging debugging logs on a destination
+	DEBUG
+
+	// WARN is the flag for logging warning logs on a destination
+	WARN
+
+	// ERROR is the flag for logging error logs on a destination
+	ERROR
+
+	// CRIT is the flag for logging critical logs on a destination
+	CRIT
+
+	// FATAL is the flag for logging fatal logs on a destination
+	FATAL
+
+	// CUSTOM is the flag to indicate that a custom log type is being passed
+	// instead of one of the built in types
+	CUSTOM
 )
 
 var mutty = sync.Mutex{}
@@ -25,15 +53,15 @@ var instance Logger
 
 func init() {
 	var err error
+
 	if err = NewGlobal(
 		context.Background(), // Default context
-		std,                  // Standard logging - Strings
 		"",                   // No prefix
 		time.RFC3339,         // Standard time format
 		time.UTC,             // UTC logging
 		false,                // Debug logging disabled
 		100,                  // Default buffer of 100 logs
-		os.Stdout,            // Default destination: Standard Out
+		Standards()...,       // Default destinations
 	); err != nil {
 
 		// Panic if the initialization fails
@@ -60,15 +88,14 @@ func setGlobal(logger Logger) (err error) {
 
 // NewGlobal instantiates a new logger using the passed in parameters and overwrites
 // the package global instance of the logger
-// Format: standard = 0, delim = 1, json = 2
 // Prefix: the string prefix of the logs that is listed before the date
 // Buffer: the buffer size of the channel for processing the logs, DEFAULT: 100
 // DateFormat: the format of the date. Default: time.RFC3339
 // Location: the location for logging time. Default: time.UTC
 // Debug: enable debug logging: Default: false
-func NewGlobal(ctx context.Context, format int, prefix string, dateformat string, location *time.Location, debug bool, buffer int, out ...io.Writer) (err error) {
+func NewGlobal(ctx context.Context, prefix string, dateformat string, location *time.Location, debug bool, buffer int, destinations ...Dest) (err error) {
 	var newLogger Logger
-	if newLogger, err = New(ctx, format, prefix, dateformat, location, debug, buffer, out...); err == nil {
+	if newLogger, err = New(ctx, prefix, dateformat, location, debug, buffer, destinations...); err == nil {
 		err = setGlobal(newLogger)
 	}
 
@@ -78,43 +105,46 @@ func NewGlobal(ctx context.Context, format int, prefix string, dateformat string
 // New creates a new logger using the information passed in to setup
 // the logging configuration rather than using the standard Stdout logger
 // that is initialized automatically
-// Format: standard = 0, delim = 1, json = 2
 // Prefix: the string prefix of the logs that is listed before the date
 // Buffer: the buffer size of the channel for processing the logs, DEFAULT: 100
 // DateFormat: the format of the date. Default: time.RFC3339
 // Location: the location for logging time. Default: time.UTC
 // Debug: enable debug logging: Default: false
-func New(ctx context.Context, format int, prefix string, dateformat string, location *time.Location, debug bool, buffer int, out ...io.Writer) (logger Logger, err error) {
+func New(ctx context.Context, prefix string, dateformat string, location *time.Location, debug bool, buffer int, destinations ...Dest) (logger Logger, err error) {
 
 	if ctx == nil {
 		ctx = context.Background()
 	}
 
-	if format >= 0 {
-		if buffer >= 0 {
-			if len(out) >= 1 {
+	if location == nil {
+		location = time.UTC
+	}
 
-				// Setup the logger context
-				var cancel context.CancelFunc
-				ctx, cancel = context.WithCancel(ctx)
+	if len(dateformat) == 0 {
+		dateformat = time.RFC3339
+	}
 
-				// Initialize the logger struct
-				a := &alog{
-					ctx:        ctx,
-					cancel:     cancel,
-					outputs:    out,
-					format:     format,
-					prefix:     prefix,
-					location:   time.UTC,
-					dateformat: time.RFC3339,
-				}
+	if buffer >= 0 {
+		if len(destinations) >= 1 {
 
-				// initialize the go routines for reading the logs
-				if err = a.init(); err == nil {
-					logger = a
-				}
-			} else {
-				// TODO:
+			// Setup the logger context
+			var cancel context.CancelFunc
+			ctx, cancel = context.WithCancel(ctx)
+
+			// Initialize the logger struct
+			a := &alog{
+				ctx:          ctx,
+				cancel:       cancel,
+				destinations: destinations,
+				prefix:       prefix,
+				location:     time.UTC,
+				dateformat:   time.RFC3339,
+				logdebug:     debug,
+			}
+
+			// initialize the go routines for reading the logs
+			if err = a.init(); err == nil {
+				logger = a
 			}
 		} else {
 			// TODO:
