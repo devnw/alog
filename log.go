@@ -24,13 +24,22 @@ func (l log) String() (output string) {
 		err = fmt.Sprintf(" %s", l.err)
 	}
 
+	message := ""
 	strs := l.getmessages(l.values)
+	if len(strs) > 0 {
+		message = fmt.Sprintf(" %s", strings.Join(strs, ","))
+	}
 
-	output = fmt.Sprintf("%s %s%s %s\n",
+	// Handle the empty message and error section
+	if len(err) == 0 && len(message) == 0 {
+		message = "Unable to create log string, empty message and error"
+	}
+
+	output = fmt.Sprintf("%s %s%s%s\n",
 		l.timestamp.Format(l.logger.dateformat),
 		l.Type(),
 		err,
-		strings.Join(strs, ","),
+		message,
 	)
 
 	return output

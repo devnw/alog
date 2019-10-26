@@ -1,9 +1,17 @@
 package alog
 
-import "io"
+import (
+	"context"
+	"io"
+)
 
 // Logger provides the ability to log using different methods asynchronously
 type Logger interface {
+
+	// Printc creates informational logs based on the data coming from the
+	// concurrency channel that is passed in for processing
+	Printc(ctx context.Context, v <-chan interface{})
+
 	// Print creates informational logs based on the inputs
 	Print(v ...interface{})
 
@@ -13,6 +21,10 @@ type Logger interface {
 	// Printf creates an informational log using the format and values
 	Printf(format string, v ...interface{})
 
+	// Debugc creates debug logs based on the data coming from the
+	// concurrency channel that is passed in for processing
+	Debugc(ctx context.Context, v <-chan interface{})
+
 	// Debug creates debugging logs based on the inputs
 	Debug(v ...interface{})
 
@@ -21,6 +33,10 @@ type Logger interface {
 
 	// Debugf creates an debugging log using the format and values
 	Debugf(format string, v ...interface{})
+
+	// Warnc creates warning logs based on the data coming from the
+	// concurrency channel that is passed in for processing
+	Warnc(ctx context.Context, v <-chan interface{})
 
 	// Warn creates a warning log using the error passed in along with the
 	// values passed in
@@ -34,6 +50,10 @@ type Logger interface {
 	// formatting and values
 	Warnf(err error, format string, v ...interface{})
 
+	// Errorc creates error logs based on the data coming from the
+	// concurrency channel that is passed in for processing
+	Errorc(ctx context.Context, v <-chan interface{})
+
 	// Error creates an error log using the error and other values passed in
 	Error(err error, v ...interface{})
 
@@ -44,6 +64,10 @@ type Logger interface {
 	// Errorf creates an error log using the error passed in, along with the string
 	// formatting and values
 	Errorf(err error, format string, v ...interface{})
+
+	// Critc creates critical logs based on the data coming from the
+	// concurrency channel that is passed in for processing
+	Critc(ctx context.Context, v <-chan interface{})
 
 	// Crit creates critical logs using the error and other values passed in
 	Crit(err error, v ...interface{})
@@ -69,6 +93,10 @@ type Logger interface {
 	// formatting and values
 	// After logging the fatal log the Fatalf method throws a panic to crash the application
 	Fatalf(err error, format string, v ...interface{})
+
+	// Customc creates custom logs based on the data coming from the
+	// concurrency channel that is passed in for processing
+	Customc(ctx context.Context, v <-chan interface{}, ltype string)
 
 	// Custom creates a custom log using the error and values passed into the method
 	Custom(ltype string, err error, v ...interface{})

@@ -1,6 +1,27 @@
 package alog
 
-import "testing"
+import (
+	"context"
+	"testing"
+)
+
+func TestPrintc(t *testing.T) {
+	type args struct {
+		ctx context.Context
+		v   <-chan interface{}
+	}
+	tests := []struct {
+		name string
+		args args
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			Printc(tt.args.ctx, tt.args.v)
+		})
+	}
+}
 
 func TestPrint(t *testing.T) {
 	type args struct {
@@ -54,6 +75,24 @@ func TestPrintf(t *testing.T) {
 	}
 }
 
+func TestDebugc(t *testing.T) {
+	type args struct {
+		ctx context.Context
+		v   <-chan interface{}
+	}
+	tests := []struct {
+		name string
+		args args
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			Debugc(tt.args.ctx, tt.args.v)
+		})
+	}
+}
+
 func TestDebug(t *testing.T) {
 	type args struct {
 		v []interface{}
@@ -102,6 +141,24 @@ func TestDebugf(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			Debugf(tt.args.format, tt.args.v...)
+		})
+	}
+}
+
+func TestWarnc(t *testing.T) {
+	type args struct {
+		ctx context.Context
+		v   <-chan interface{}
+	}
+	tests := []struct {
+		name string
+		args args
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			Warnc(tt.args.ctx, tt.args.v)
 		})
 	}
 }
@@ -161,6 +218,24 @@ func TestWarnf(t *testing.T) {
 	}
 }
 
+func TestErrorc(t *testing.T) {
+	type args struct {
+		ctx context.Context
+		v   <-chan interface{}
+	}
+	tests := []struct {
+		name string
+		args args
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			Errorc(tt.args.ctx, tt.args.v)
+		})
+	}
+}
+
 func TestError(t *testing.T) {
 	type args struct {
 		err error
@@ -212,6 +287,24 @@ func TestErrorf(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			Errorf(tt.args.err, tt.args.format, tt.args.v...)
+		})
+	}
+}
+
+func TestCritc(t *testing.T) {
+	type args struct {
+		ctx context.Context
+		v   <-chan interface{}
+	}
+	tests := []struct {
+		name string
+		args args
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			Critc(tt.args.ctx, tt.args.v)
 		})
 	}
 }
@@ -322,6 +415,25 @@ func TestFatalf(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			Fatalf(tt.args.err, tt.args.format, tt.args.v...)
+		})
+	}
+}
+
+func TestCustomc(t *testing.T) {
+	type args struct {
+		ctx   context.Context
+		v     <-chan interface{}
+		ltype string
+	}
+	tests := []struct {
+		name string
+		args args
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			Customc(tt.args.ctx, tt.args.v, tt.args.ltype)
 		})
 	}
 }

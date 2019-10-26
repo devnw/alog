@@ -103,6 +103,7 @@ func Test_alog_send(t *testing.T) {
 		buffer       int
 	}
 	type args struct {
+		ctx     context.Context
 		logtype int8
 		value   log
 	}
@@ -125,7 +126,7 @@ func Test_alog_send(t *testing.T) {
 				logdebug:     tt.fields.logdebug,
 				buffer:       tt.fields.buffer,
 			}
-			l.send(tt.args.value)
+			l.send(tt.args.ctx, tt.args.value)
 		})
 	}
 }
@@ -1100,6 +1101,327 @@ func Test_alog_Validate(t *testing.T) {
 			if gotValid := l.Validate(); gotValid != tt.wantValid {
 				t.Errorf("alog.Validate() = %v, want %v", gotValid, tt.wantValid)
 			}
+		})
+	}
+}
+
+func Test_alog_buildlog(t *testing.T) {
+	type fields struct {
+		ctx          context.Context
+		cancel       context.CancelFunc
+		destinations []Destination
+		location     *time.Location
+		dateformat   string
+		prefix       string
+		logdebug     bool
+		buffer       int
+	}
+	type args struct {
+		logtype int8
+		custom  string
+		err     error
+		format  *string
+		v       []interface{}
+	}
+	tests := []struct {
+		name       string
+		fields     fields
+		args       args
+		wantNewlog log
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			l := &alog{
+				ctx:          tt.fields.ctx,
+				cancel:       tt.fields.cancel,
+				destinations: tt.fields.destinations,
+				location:     tt.fields.location,
+				dateformat:   tt.fields.dateformat,
+				prefix:       tt.fields.prefix,
+				logdebug:     tt.fields.logdebug,
+				buffer:       tt.fields.buffer,
+			}
+			if gotNewlog := l.buildlog(tt.args.logtype, tt.args.custom, tt.args.err, tt.args.format, tt.args.v...); !reflect.DeepEqual(gotNewlog, tt.wantNewlog) {
+				t.Errorf("alog.buildlog() = %v, want %v", gotNewlog, tt.wantNewlog)
+			}
+		})
+	}
+}
+
+func Test_alog_clog(t *testing.T) {
+	type fields struct {
+		ctx          context.Context
+		cancel       context.CancelFunc
+		destinations []Destination
+		location     *time.Location
+		dateformat   string
+		prefix       string
+		logdebug     bool
+		buffer       int
+	}
+	type args struct {
+		ctx     context.Context
+		v       <-chan interface{}
+		logtype int8
+		custom  string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			l := &alog{
+				ctx:          tt.fields.ctx,
+				cancel:       tt.fields.cancel,
+				destinations: tt.fields.destinations,
+				location:     tt.fields.location,
+				dateformat:   tt.fields.dateformat,
+				prefix:       tt.fields.prefix,
+				logdebug:     tt.fields.logdebug,
+				buffer:       tt.fields.buffer,
+			}
+			l.clog(tt.args.ctx, tt.args.v, tt.args.logtype, tt.args.custom)
+		})
+	}
+}
+
+func Test_alog_Printc(t *testing.T) {
+	type fields struct {
+		ctx          context.Context
+		cancel       context.CancelFunc
+		destinations []Destination
+		location     *time.Location
+		dateformat   string
+		prefix       string
+		logdebug     bool
+		buffer       int
+	}
+	type args struct {
+		ctx context.Context
+		v   <-chan interface{}
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			l := &alog{
+				ctx:          tt.fields.ctx,
+				cancel:       tt.fields.cancel,
+				destinations: tt.fields.destinations,
+				location:     tt.fields.location,
+				dateformat:   tt.fields.dateformat,
+				prefix:       tt.fields.prefix,
+				logdebug:     tt.fields.logdebug,
+				buffer:       tt.fields.buffer,
+			}
+			l.Printc(tt.args.ctx, tt.args.v)
+		})
+	}
+}
+
+func Test_alog_Debugc(t *testing.T) {
+	type fields struct {
+		ctx          context.Context
+		cancel       context.CancelFunc
+		destinations []Destination
+		location     *time.Location
+		dateformat   string
+		prefix       string
+		logdebug     bool
+		buffer       int
+	}
+	type args struct {
+		ctx context.Context
+		v   <-chan interface{}
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			l := &alog{
+				ctx:          tt.fields.ctx,
+				cancel:       tt.fields.cancel,
+				destinations: tt.fields.destinations,
+				location:     tt.fields.location,
+				dateformat:   tt.fields.dateformat,
+				prefix:       tt.fields.prefix,
+				logdebug:     tt.fields.logdebug,
+				buffer:       tt.fields.buffer,
+			}
+			l.Debugc(tt.args.ctx, tt.args.v)
+		})
+	}
+}
+
+func Test_alog_Warnc(t *testing.T) {
+	type fields struct {
+		ctx          context.Context
+		cancel       context.CancelFunc
+		destinations []Destination
+		location     *time.Location
+		dateformat   string
+		prefix       string
+		logdebug     bool
+		buffer       int
+	}
+	type args struct {
+		ctx context.Context
+		v   <-chan interface{}
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			l := &alog{
+				ctx:          tt.fields.ctx,
+				cancel:       tt.fields.cancel,
+				destinations: tt.fields.destinations,
+				location:     tt.fields.location,
+				dateformat:   tt.fields.dateformat,
+				prefix:       tt.fields.prefix,
+				logdebug:     tt.fields.logdebug,
+				buffer:       tt.fields.buffer,
+			}
+			l.Warnc(tt.args.ctx, tt.args.v)
+		})
+	}
+}
+
+func Test_alog_Errorc(t *testing.T) {
+	type fields struct {
+		ctx          context.Context
+		cancel       context.CancelFunc
+		destinations []Destination
+		location     *time.Location
+		dateformat   string
+		prefix       string
+		logdebug     bool
+		buffer       int
+	}
+	type args struct {
+		ctx context.Context
+		v   <-chan interface{}
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			l := &alog{
+				ctx:          tt.fields.ctx,
+				cancel:       tt.fields.cancel,
+				destinations: tt.fields.destinations,
+				location:     tt.fields.location,
+				dateformat:   tt.fields.dateformat,
+				prefix:       tt.fields.prefix,
+				logdebug:     tt.fields.logdebug,
+				buffer:       tt.fields.buffer,
+			}
+			l.Errorc(tt.args.ctx, tt.args.v)
+		})
+	}
+}
+
+func Test_alog_Critc(t *testing.T) {
+	type fields struct {
+		ctx          context.Context
+		cancel       context.CancelFunc
+		destinations []Destination
+		location     *time.Location
+		dateformat   string
+		prefix       string
+		logdebug     bool
+		buffer       int
+	}
+	type args struct {
+		ctx context.Context
+		v   <-chan interface{}
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			l := &alog{
+				ctx:          tt.fields.ctx,
+				cancel:       tt.fields.cancel,
+				destinations: tt.fields.destinations,
+				location:     tt.fields.location,
+				dateformat:   tt.fields.dateformat,
+				prefix:       tt.fields.prefix,
+				logdebug:     tt.fields.logdebug,
+				buffer:       tt.fields.buffer,
+			}
+			l.Critc(tt.args.ctx, tt.args.v)
+		})
+	}
+}
+
+func Test_alog_Customc(t *testing.T) {
+	type fields struct {
+		ctx          context.Context
+		cancel       context.CancelFunc
+		destinations []Destination
+		location     *time.Location
+		dateformat   string
+		prefix       string
+		logdebug     bool
+		buffer       int
+	}
+	type args struct {
+		ctx   context.Context
+		v     <-chan interface{}
+		ltype string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			l := &alog{
+				ctx:          tt.fields.ctx,
+				cancel:       tt.fields.cancel,
+				destinations: tt.fields.destinations,
+				location:     tt.fields.location,
+				dateformat:   tt.fields.dateformat,
+				prefix:       tt.fields.prefix,
+				logdebug:     tt.fields.logdebug,
+				buffer:       tt.fields.buffer,
+			}
+			l.Customc(tt.args.ctx, tt.args.v, tt.args.ltype)
 		})
 	}
 }
