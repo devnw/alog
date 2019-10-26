@@ -2,6 +2,7 @@ package alog
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"time"
 
@@ -14,7 +15,7 @@ import (
 type alog struct {
 	ctx          context.Context
 	cancel       context.CancelFunc
-	destinations []Dest
+	destinations []Destination
 
 	// location is the timezone that is used for logging. Default: UTC
 	location *time.Location
@@ -23,20 +24,133 @@ type alog struct {
 	dateformat string
 	prefix     string
 	logdebug   bool
+	buffer     int
 
 	// The channels which will have logs sent and received on
-	info  chan log
-	debug chan log
-	warn  chan log
-	err   chan log
-	crit  chan log
-	fatal chan log
+	info      chan log
+	infodests []chan<- log
+
+	debug      chan log
+	debugdests []chan<- log
+
+	warn      chan log
+	warndests []chan<- log
+
+	err      chan log
+	errdests []chan<- log
+
+	crit      chan log
+	critdests []chan<- log
+
+	fatal      chan log
+	fataldests []chan<- log
+
+	custom      chan log
+	customdests []chan<- log
 }
 
 // init starts up the go routines for receiving and publishing logs
 // to the available io.Writers
 func (l *alog) init() (err error) {
+
+	for _, dest := range l.destinations {
+		if dest.Types&INFO > 0 {
+			l.infodests = append(l.infodests, l.listen(l.ctx, dest))
+		}
+
+		if dest.Types&DEBUG > 0 {
+			l.debugdests = append(l.debugdests, l.listen(l.ctx, dest))
+		}
+
+		if dest.Types&WARN > 0 {
+			l.warndests = append(l.warndests, l.listen(l.ctx, dest))
+		}
+
+		if dest.Types&ERROR > 0 {
+			l.errdests = append(l.errdests, l.listen(l.ctx, dest))
+		}
+
+		if dest.Types&CRIT > 0 {
+			l.critdests = append(l.critdests, l.listen(l.ctx, dest))
+		}
+
+		if dest.Types&FATAL > 0 {
+			l.fataldests = append(l.fataldests, l.listen(l.ctx, dest))
+		}
+
+		if dest.Types&CUSTOM > 0 {
+			l.customdests = append(l.customdests, l.listen(l.ctx, dest))
+		}
+	}
+
 	return err
+}
+
+func (l *alog) listen(ctx context.Context, destination Destination) chan<- log {
+	logs := make(chan log)
+
+	go func(ctx context.Context, logs chan log, destination Destination) {
+		// TODO: handle panic
+		defer close(logs)
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case log, ok := <-logs:
+				if ok {
+					if validator.IsValid(log) {
+						// TODO: correct this
+						fmt.Fprint(destination.Writer, log)
+					} else {
+						// TODO:
+					}
+				} else {
+					return
+				}
+			}
+		}
+	}(ctx, logs, destination)
+
+	return logs
+}
+
+// fansendout is used to create a go routine thread for fanning out specific
+// log types to each of the destinations
+func (l *alog) send(logtype int8, value log) {
+	// TODO: Handle panic here
+
+	// Loop over the destinations for this logtype and push onto the
+	// log channels for each destination
+	for _, destination := range l.getd(logtype) {
+
+		// Push the log onto the destination channel
+		select {
+		case <-l.ctx.Done():
+			return
+		case destination <- value:
+		}
+	}
+}
+
+func (l *alog) getd(logtype int8) []chan<- log {
+	destinations := l.infodests
+
+	if logtype&DEBUG > 0 {
+		destinations = l.debugdests
+	} else if logtype&WARN > 0 {
+		destinations = l.warndests
+	} else if logtype&ERROR > 0 {
+		destinations = l.errdests
+	} else if logtype&CRIT > 0 {
+		destinations = l.critdests
+	} else if logtype&FATAL > 0 {
+		destinations = l.fataldests
+	} else if logtype&CUSTOM > 0 {
+		destinations = l.customdests
+	}
+
+	return destinations
 }
 
 // Print creates informational logs based on the inputs

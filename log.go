@@ -45,17 +45,17 @@ func (l log) MarshalJSON() ([]byte, error) {
 // Type returns the type of the log for parsing or displaying
 func (l log) Type() (t string) {
 
-	if l.logtype&FATAL == 1 {
+	if l.logtype&FATAL > 0 {
 		t = "FATAL"
-	} else if l.logtype&CRIT == 1 {
+	} else if l.logtype&CRIT > 0 {
 		t = "CRITICAL"
-	} else if l.logtype&ERROR == 1 {
+	} else if l.logtype&ERROR > 0 {
 		t = "ERROR"
-	} else if l.logtype&WARN == 1 {
+	} else if l.logtype&WARN > 0 {
 		t = "WARNING"
-	} else if l.logtype&DEBUG == 1 {
+	} else if l.logtype&DEBUG > 0 {
 		t = "DEBUG"
-	} else if l.logtype&CUSTOM == 1 {
+	} else if l.logtype&CUSTOM > 0 {
 		t = "CUSTOM"
 		if len(l.customtype) > 0 {
 			t = l.customtype
