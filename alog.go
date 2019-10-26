@@ -96,6 +96,7 @@ func (l *alog) listen(ctx context.Context, destination Destination) chan<- log {
 		for {
 			select {
 			case <-ctx.Done():
+				// TODO: setup to close the destination if it has a close method
 				return
 			case log, ok := <-logs:
 				if ok {

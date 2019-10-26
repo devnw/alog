@@ -85,7 +85,10 @@ func setGlobal(logger Logger) (err error) {
 		defer mutty.Unlock()
 
 		// Close the logger instance and replace it
-		instance.Close()
+		if instance != nil {
+			instance.Close()
+		}
+
 		instance = logger
 	} else {
 		err = errors.New("invalid logger")
