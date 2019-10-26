@@ -2,7 +2,6 @@ package alog
 
 import (
 	"encoding/json"
-	"fmt"
 	"time"
 )
 
@@ -12,19 +11,10 @@ type log struct {
 	customtype string
 	timestamp  time.Time
 	err        error
-	format     *string
-	v          []interface{}
+	values     []interface{}
 }
 
 func (l log) MarshalJSON() ([]byte, error) {
-
-	// Setup the messages for the marshalling
-	var messages []interface{}
-	if l.format != nil {
-		messages = append(messages, fmt.Sprintf(*l.format, l.v))
-	} else {
-		messages = append(messages, l.v...)
-	}
 
 	// Setup a new flattened struct for json dumps of the logs
 	output := &struct {
@@ -36,7 +26,7 @@ func (l log) MarshalJSON() ([]byte, error) {
 		l.Type(),
 		l.timestamp.Format(l.logger.dateformat),
 		l.err,
-		messages,
+		l.values,
 	}
 
 	return json.Marshal(output)

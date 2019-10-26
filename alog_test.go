@@ -8,6 +8,10 @@ import (
 	"time"
 )
 
+func Test_alog_global(t *testing.T) {
+	Println("HELLO WORLD")
+}
+
 func Test_alog_init(t *testing.T) {
 	type fields struct {
 		ctx          context.Context
@@ -121,7 +125,7 @@ func Test_alog_send(t *testing.T) {
 				logdebug:     tt.fields.logdebug,
 				buffer:       tt.fields.buffer,
 			}
-			l.send(tt.args.logtype, tt.args.value)
+			l.send(tt.args.value)
 		})
 	}
 }

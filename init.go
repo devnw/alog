@@ -20,7 +20,7 @@ const (
 	JSON = 2
 )
 
-// Log switches for sources setup using bitwise comparision
+// Log switches for sources setup using bitwise comparison
 const (
 	// INFO is the flag for logging informational logs on a destination
 	INFO = 1 << iota

@@ -13,8 +13,7 @@ func Test_log_MarshalJSON(t *testing.T) {
 		customtype string
 		timestamp  time.Time
 		err        error
-		format     *string
-		v          []interface{}
+		values     []interface{}
 	}
 	tests := []struct {
 		name    string
@@ -32,8 +31,7 @@ func Test_log_MarshalJSON(t *testing.T) {
 				customtype: tt.fields.customtype,
 				timestamp:  tt.fields.timestamp,
 				err:        tt.fields.err,
-				format:     tt.fields.format,
-				v:          tt.fields.v,
+				values:     tt.fields.values,
 			}
 			got, err := l.MarshalJSON()
 			if (err != nil) != tt.wantErr {
@@ -54,8 +52,7 @@ func Test_log_Type(t *testing.T) {
 		customtype string
 		timestamp  time.Time
 		err        error
-		format     *string
-		v          []interface{}
+		values     []interface{}
 	}
 	tests := []struct {
 		name   string
@@ -72,8 +69,7 @@ func Test_log_Type(t *testing.T) {
 				customtype: tt.fields.customtype,
 				timestamp:  tt.fields.timestamp,
 				err:        tt.fields.err,
-				format:     tt.fields.format,
-				v:          tt.fields.v,
+				values:     tt.fields.values,
 			}
 			if gotT := l.Type(); gotT != tt.wantT {
 				t.Errorf("log.Type() = %v, want %v", gotT, tt.wantT)
