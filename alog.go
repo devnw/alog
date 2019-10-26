@@ -2,6 +2,7 @@ package alog
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"time"
@@ -93,16 +94,35 @@ func (l *alog) listen(ctx context.Context, destination Destination) chan<- log {
 		// TODO: handle panic
 		defer close(logs)
 
+		// Setup the prefix to be prepended to the beginning
+		prefix := ""
+		if len(l.prefix) > 0 {
+			prefix = fmt.Sprintf("%s ", l.prefix)
+		}
+
 		for {
 			select {
 			case <-ctx.Done():
 				// TODO: setup to close the destination if it has a close method
 				return
-			case log, ok := <-logs:
+			case l, ok := <-logs:
 				if ok {
-					if validator.IsValid(log) {
-						// TODO: correct this
-						fmt.Fprint(destination.Writer, log)
+					if validator.IsValid(l) {
+						var message string
+
+						switch destination.Format {
+						case DELIM:
+						case JSON:
+							if msg, err := json.Marshal(l); err == nil {
+								message = string(msg)
+							} else {
+								// TODO: panic?
+							}
+						default:
+							message = l.String()
+						}
+
+						fmt.Fprintf(destination.Writer, "%s%s", prefix, string(message))
 					} else {
 						// TODO:
 					}
