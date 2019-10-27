@@ -3,7 +3,6 @@ package alog
 import (
 	"encoding/json"
 	"fmt"
-	"reflect"
 	"strings"
 	"time"
 )
@@ -101,7 +100,6 @@ func (l log) getmessage(v interface{}) (message string) {
 	case fmt.Stringer:
 		message = field.String()
 	default:
-		fmt.Println(reflect.TypeOf(field))
 		message = fmt.Sprintf("%v", field)
 	}
 

@@ -33,7 +33,6 @@ func TestGlobal(t *testing.T) {
 		prefix       string
 		dateformat   string
 		location     *time.Location
-		debug        bool
 		buffer       int
 		destinations []Destination
 	}
@@ -46,7 +45,7 @@ func TestGlobal(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := Global(tt.args.ctx, tt.args.prefix, tt.args.dateformat, tt.args.location, tt.args.debug, tt.args.buffer, tt.args.destinations...); (err != nil) != tt.wantErr {
+			if err := Global(tt.args.ctx, tt.args.prefix, tt.args.dateformat, tt.args.location, tt.args.buffer, tt.args.destinations...); (err != nil) != tt.wantErr {
 				t.Errorf("Global() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
@@ -59,7 +58,6 @@ func TestNew(t *testing.T) {
 		prefix       string
 		dateformat   string
 		location     *time.Location
-		debug        bool
 		buffer       int
 		destinations []Destination
 	}
@@ -73,7 +71,7 @@ func TestNew(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotLogger, err := New(tt.args.ctx, tt.args.prefix, tt.args.dateformat, tt.args.location, tt.args.debug, tt.args.buffer, tt.args.destinations...)
+			gotLogger, err := New(tt.args.ctx, tt.args.prefix, tt.args.dateformat, tt.args.location, tt.args.buffer, tt.args.destinations...)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("New() error = %v, wantErr %v", err, tt.wantErr)
 				return

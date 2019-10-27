@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"sync"
 	"time"
 
 	"github.com/benjivesterby/validator"
@@ -24,29 +25,17 @@ type alog struct {
 	// dateformat is the date format that is used in the logging. Default: RFC3339
 	dateformat string
 	prefix     string
-	logdebug   bool
 	buffer     int
 
+	mutty sync.Mutex
+
 	// The channels which will have logs sent and received on
-	info      chan log
-	infodests []chan<- log
-
-	debug      chan log
-	debugdests []chan<- log
-
-	warn      chan log
-	warndests []chan<- log
-
-	err      chan log
-	errdests []chan<- log
-
-	crit      chan log
-	critdests []chan<- log
-
-	fatal      chan log
-	fataldests []chan<- log
-
-	custom      chan log
+	infodests   []chan<- log
+	debugdests  []chan<- log
+	warndests   []chan<- log
+	errdests    []chan<- log
+	critdests   []chan<- log
+	fataldests  []chan<- log
 	customdests []chan<- log
 }
 
@@ -56,10 +45,12 @@ func (l *alog) init() (err error) {
 
 	for _, dest := range l.destinations {
 		if dest.Types&INFO > 0 {
+
 			l.infodests = append(l.infodests, l.listen(l.ctx, dest))
 		}
 
 		if dest.Types&DEBUG > 0 {
+
 			l.debugdests = append(l.debugdests, l.listen(l.ctx, dest))
 		}
 
@@ -237,32 +228,24 @@ func (l *alog) Printf(format string, v ...interface{}) {
 // Debugc creates debug logs based on the data coming from the
 // concurrency channel that is passed in for processing
 func (l *alog) Debugc(ctx context.Context, v <-chan interface{}) {
-	if l.logdebug {
-		l.clog(ctx, v, DEBUG, "")
-	}
+	l.clog(ctx, v, DEBUG, "")
 }
 
 // Debug creates debugging logs based on the inputs
 func (l *alog) Debug(v ...interface{}) {
-	if l.logdebug {
-		l.send(l.ctx, l.buildlog(DEBUG, "", nil, nil, v...))
-	}
+	l.send(l.ctx, l.buildlog(DEBUG, "", nil, nil, v...))
 }
 
 // Debugln prints the data coming in as a debug log on individual lines
 func (l *alog) Debugln(v ...interface{}) {
-	if l.logdebug {
-		for _, value := range v {
-			l.send(l.ctx, l.buildlog(DEBUG, "", nil, nil, value))
-		}
+	for _, value := range v {
+		l.send(l.ctx, l.buildlog(DEBUG, "", nil, nil, value))
 	}
 }
 
 // Debugf creates an debugging log using the format and values
 func (l *alog) Debugf(format string, v ...interface{}) {
-	if l.logdebug {
-		l.send(l.ctx, l.buildlog(DEBUG, "", nil, &format, v...))
-	}
+	l.send(l.ctx, l.buildlog(DEBUG, "", nil, &format, v...))
 }
 
 // Warnc creates warning logs based on the data coming from the

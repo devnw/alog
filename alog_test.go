@@ -16,7 +16,7 @@ func Test_alog_global(t *testing.T) {
 	mock := &writemock{make(chan []byte)}
 
 	dest := Destination{
-		INFO | DEBUG | WARN | ERROR | CRIT | FATAL | CUSTOM,
+		INFO | WARN | ERROR | CRIT | FATAL | CUSTOM,
 		STD,
 		mock,
 	}
@@ -26,7 +26,6 @@ func Test_alog_global(t *testing.T) {
 		"",
 		DEFAULTTIMEFORMAT,
 		time.UTC,
-		false,
 		DEFAULTBUFFER,
 		dest,
 	); err == nil {
@@ -35,13 +34,13 @@ func Test_alog_global(t *testing.T) {
 
 		fmt.Println(string(<-mock.msg))
 
-		Critln(errors.New("TEST ERROR"), "HELLO WORLD")
+		Println(errors.New("TEST ERROR"), "HELLO WORLD")
 
 		fmt.Println(string(<-mock.msg))
 
-		Critln(errors.New("TEST ERROR"), "HELLO WORLD")
+		Debugln(errors.New("TEST ERROR"), "HELLO WORLD")
 
-		fmt.Println(string(<-mock.msg))
+		// NO DEBUG DEST fmt.Println(string(<-mock.msg))
 
 		Critln(errors.New("TEST ERROR"), "HELLO WORLD")
 
@@ -63,7 +62,6 @@ func Test_alog_init(t *testing.T) {
 		location     *time.Location
 		dateformat   string
 		prefix       string
-		logdebug     bool
 		buffer       int
 	}
 	tests := []struct {
@@ -82,7 +80,6 @@ func Test_alog_init(t *testing.T) {
 				location:     tt.fields.location,
 				dateformat:   tt.fields.dateformat,
 				prefix:       tt.fields.prefix,
-				logdebug:     tt.fields.logdebug,
 				buffer:       tt.fields.buffer,
 			}
 			if err := l.init(); (err != nil) != tt.wantErr {
@@ -100,7 +97,6 @@ func Test_alog_listen(t *testing.T) {
 		location     *time.Location
 		dateformat   string
 		prefix       string
-		logdebug     bool
 		buffer       int
 	}
 	type args struct {
@@ -124,7 +120,6 @@ func Test_alog_listen(t *testing.T) {
 				location:     tt.fields.location,
 				dateformat:   tt.fields.dateformat,
 				prefix:       tt.fields.prefix,
-				logdebug:     tt.fields.logdebug,
 				buffer:       tt.fields.buffer,
 			}
 			if got := l.listen(tt.args.ctx, tt.args.destination); !reflect.DeepEqual(got, tt.want) {
@@ -142,7 +137,6 @@ func Test_alog_send(t *testing.T) {
 		location     *time.Location
 		dateformat   string
 		prefix       string
-		logdebug     bool
 		buffer       int
 	}
 	type args struct {
@@ -166,7 +160,6 @@ func Test_alog_send(t *testing.T) {
 				location:     tt.fields.location,
 				dateformat:   tt.fields.dateformat,
 				prefix:       tt.fields.prefix,
-				logdebug:     tt.fields.logdebug,
 				buffer:       tt.fields.buffer,
 			}
 			l.send(tt.args.ctx, tt.args.value)
@@ -182,7 +175,6 @@ func Test_alog_getd(t *testing.T) {
 		location     *time.Location
 		dateformat   string
 		prefix       string
-		logdebug     bool
 		buffer       int
 	}
 	type args struct {
@@ -205,7 +197,6 @@ func Test_alog_getd(t *testing.T) {
 				location:     tt.fields.location,
 				dateformat:   tt.fields.dateformat,
 				prefix:       tt.fields.prefix,
-				logdebug:     tt.fields.logdebug,
 				buffer:       tt.fields.buffer,
 			}
 			if got := l.getd(tt.args.logtype); !reflect.DeepEqual(got, tt.want) {
@@ -223,7 +214,6 @@ func Test_alog_Print(t *testing.T) {
 		location     *time.Location
 		dateformat   string
 		prefix       string
-		logdebug     bool
 		buffer       int
 	}
 	type args struct {
@@ -245,7 +235,6 @@ func Test_alog_Print(t *testing.T) {
 				location:     tt.fields.location,
 				dateformat:   tt.fields.dateformat,
 				prefix:       tt.fields.prefix,
-				logdebug:     tt.fields.logdebug,
 				buffer:       tt.fields.buffer,
 			}
 			l.Print(tt.args.v...)
@@ -283,7 +272,6 @@ func Test_alog_Println(t *testing.T) {
 				location:     tt.fields.location,
 				dateformat:   tt.fields.dateformat,
 				prefix:       tt.fields.prefix,
-				logdebug:     tt.fields.logdebug,
 				buffer:       tt.fields.buffer,
 			}
 			l.Println(tt.args.v...)
@@ -299,7 +287,6 @@ func Test_alog_Printf(t *testing.T) {
 		location     *time.Location
 		dateformat   string
 		prefix       string
-		logdebug     bool
 		buffer       int
 	}
 	type args struct {
@@ -322,7 +309,6 @@ func Test_alog_Printf(t *testing.T) {
 				location:     tt.fields.location,
 				dateformat:   tt.fields.dateformat,
 				prefix:       tt.fields.prefix,
-				logdebug:     tt.fields.logdebug,
 				buffer:       tt.fields.buffer,
 			}
 			l.Printf(tt.args.format, tt.args.v...)
@@ -338,7 +324,6 @@ func Test_alog_Debug(t *testing.T) {
 		location     *time.Location
 		dateformat   string
 		prefix       string
-		logdebug     bool
 		buffer       int
 	}
 	type args struct {
@@ -360,7 +345,6 @@ func Test_alog_Debug(t *testing.T) {
 				location:     tt.fields.location,
 				dateformat:   tt.fields.dateformat,
 				prefix:       tt.fields.prefix,
-				logdebug:     tt.fields.logdebug,
 				buffer:       tt.fields.buffer,
 			}
 			l.Debug(tt.args.v...)
@@ -376,7 +360,6 @@ func Test_alog_Debugln(t *testing.T) {
 		location     *time.Location
 		dateformat   string
 		prefix       string
-		logdebug     bool
 		buffer       int
 	}
 	type args struct {
@@ -398,7 +381,6 @@ func Test_alog_Debugln(t *testing.T) {
 				location:     tt.fields.location,
 				dateformat:   tt.fields.dateformat,
 				prefix:       tt.fields.prefix,
-				logdebug:     tt.fields.logdebug,
 				buffer:       tt.fields.buffer,
 			}
 			l.Debugln(tt.args.v...)
@@ -414,7 +396,6 @@ func Test_alog_Debugf(t *testing.T) {
 		location     *time.Location
 		dateformat   string
 		prefix       string
-		logdebug     bool
 		buffer       int
 	}
 	type args struct {
@@ -437,7 +418,6 @@ func Test_alog_Debugf(t *testing.T) {
 				location:     tt.fields.location,
 				dateformat:   tt.fields.dateformat,
 				prefix:       tt.fields.prefix,
-				logdebug:     tt.fields.logdebug,
 				buffer:       tt.fields.buffer,
 			}
 			l.Debugf(tt.args.format, tt.args.v...)
@@ -453,7 +433,6 @@ func Test_alog_Warn(t *testing.T) {
 		location     *time.Location
 		dateformat   string
 		prefix       string
-		logdebug     bool
 		buffer       int
 	}
 	type args struct {
@@ -476,7 +455,6 @@ func Test_alog_Warn(t *testing.T) {
 				location:     tt.fields.location,
 				dateformat:   tt.fields.dateformat,
 				prefix:       tt.fields.prefix,
-				logdebug:     tt.fields.logdebug,
 				buffer:       tt.fields.buffer,
 			}
 			l.Warn(tt.args.err, tt.args.v...)
@@ -492,7 +470,6 @@ func Test_alog_Warnln(t *testing.T) {
 		location     *time.Location
 		dateformat   string
 		prefix       string
-		logdebug     bool
 		buffer       int
 	}
 	type args struct {
@@ -515,7 +492,6 @@ func Test_alog_Warnln(t *testing.T) {
 				location:     tt.fields.location,
 				dateformat:   tt.fields.dateformat,
 				prefix:       tt.fields.prefix,
-				logdebug:     tt.fields.logdebug,
 				buffer:       tt.fields.buffer,
 			}
 			l.Warnln(tt.args.err, tt.args.v...)
@@ -531,7 +507,6 @@ func Test_alog_Warnf(t *testing.T) {
 		location     *time.Location
 		dateformat   string
 		prefix       string
-		logdebug     bool
 		buffer       int
 	}
 	type args struct {
@@ -555,7 +530,6 @@ func Test_alog_Warnf(t *testing.T) {
 				location:     tt.fields.location,
 				dateformat:   tt.fields.dateformat,
 				prefix:       tt.fields.prefix,
-				logdebug:     tt.fields.logdebug,
 				buffer:       tt.fields.buffer,
 			}
 			l.Warnf(tt.args.err, tt.args.format, tt.args.v...)
@@ -571,7 +545,6 @@ func Test_alog_Error(t *testing.T) {
 		location     *time.Location
 		dateformat   string
 		prefix       string
-		logdebug     bool
 		buffer       int
 	}
 	type args struct {
@@ -594,7 +567,6 @@ func Test_alog_Error(t *testing.T) {
 				location:     tt.fields.location,
 				dateformat:   tt.fields.dateformat,
 				prefix:       tt.fields.prefix,
-				logdebug:     tt.fields.logdebug,
 				buffer:       tt.fields.buffer,
 			}
 			l.Error(tt.args.err, tt.args.v...)
@@ -610,7 +582,6 @@ func Test_alog_Errorln(t *testing.T) {
 		location     *time.Location
 		dateformat   string
 		prefix       string
-		logdebug     bool
 		buffer       int
 	}
 	type args struct {
@@ -633,7 +604,6 @@ func Test_alog_Errorln(t *testing.T) {
 				location:     tt.fields.location,
 				dateformat:   tt.fields.dateformat,
 				prefix:       tt.fields.prefix,
-				logdebug:     tt.fields.logdebug,
 				buffer:       tt.fields.buffer,
 			}
 			l.Errorln(tt.args.err, tt.args.v...)
@@ -649,7 +619,6 @@ func Test_alog_Errorf(t *testing.T) {
 		location     *time.Location
 		dateformat   string
 		prefix       string
-		logdebug     bool
 		buffer       int
 	}
 	type args struct {
@@ -673,7 +642,6 @@ func Test_alog_Errorf(t *testing.T) {
 				location:     tt.fields.location,
 				dateformat:   tt.fields.dateformat,
 				prefix:       tt.fields.prefix,
-				logdebug:     tt.fields.logdebug,
 				buffer:       tt.fields.buffer,
 			}
 			l.Errorf(tt.args.err, tt.args.format, tt.args.v...)
@@ -689,7 +657,6 @@ func Test_alog_Crit(t *testing.T) {
 		location     *time.Location
 		dateformat   string
 		prefix       string
-		logdebug     bool
 		buffer       int
 	}
 	type args struct {
@@ -712,7 +679,6 @@ func Test_alog_Crit(t *testing.T) {
 				location:     tt.fields.location,
 				dateformat:   tt.fields.dateformat,
 				prefix:       tt.fields.prefix,
-				logdebug:     tt.fields.logdebug,
 				buffer:       tt.fields.buffer,
 			}
 			l.Crit(tt.args.err, tt.args.v...)
@@ -728,7 +694,6 @@ func Test_alog_Critln(t *testing.T) {
 		location     *time.Location
 		dateformat   string
 		prefix       string
-		logdebug     bool
 		buffer       int
 	}
 	type args struct {
@@ -751,7 +716,6 @@ func Test_alog_Critln(t *testing.T) {
 				location:     tt.fields.location,
 				dateformat:   tt.fields.dateformat,
 				prefix:       tt.fields.prefix,
-				logdebug:     tt.fields.logdebug,
 				buffer:       tt.fields.buffer,
 			}
 			l.Critln(tt.args.err, tt.args.v...)
@@ -767,7 +731,6 @@ func Test_alog_Critf(t *testing.T) {
 		location     *time.Location
 		dateformat   string
 		prefix       string
-		logdebug     bool
 		buffer       int
 	}
 	type args struct {
@@ -791,7 +754,6 @@ func Test_alog_Critf(t *testing.T) {
 				location:     tt.fields.location,
 				dateformat:   tt.fields.dateformat,
 				prefix:       tt.fields.prefix,
-				logdebug:     tt.fields.logdebug,
 				buffer:       tt.fields.buffer,
 			}
 			l.Critf(tt.args.err, tt.args.format, tt.args.v...)
@@ -807,7 +769,6 @@ func Test_alog_Fatal(t *testing.T) {
 		location     *time.Location
 		dateformat   string
 		prefix       string
-		logdebug     bool
 		buffer       int
 	}
 	type args struct {
@@ -830,7 +791,6 @@ func Test_alog_Fatal(t *testing.T) {
 				location:     tt.fields.location,
 				dateformat:   tt.fields.dateformat,
 				prefix:       tt.fields.prefix,
-				logdebug:     tt.fields.logdebug,
 				buffer:       tt.fields.buffer,
 			}
 			l.Fatal(tt.args.err, tt.args.v...)
@@ -846,7 +806,6 @@ func Test_alog_Fatalln(t *testing.T) {
 		location     *time.Location
 		dateformat   string
 		prefix       string
-		logdebug     bool
 		buffer       int
 	}
 	type args struct {
@@ -869,7 +828,6 @@ func Test_alog_Fatalln(t *testing.T) {
 				location:     tt.fields.location,
 				dateformat:   tt.fields.dateformat,
 				prefix:       tt.fields.prefix,
-				logdebug:     tt.fields.logdebug,
 				buffer:       tt.fields.buffer,
 			}
 			l.Fatalln(tt.args.err, tt.args.v...)
@@ -885,7 +843,6 @@ func Test_alog_Fatalf(t *testing.T) {
 		location     *time.Location
 		dateformat   string
 		prefix       string
-		logdebug     bool
 		buffer       int
 	}
 	type args struct {
@@ -909,7 +866,6 @@ func Test_alog_Fatalf(t *testing.T) {
 				location:     tt.fields.location,
 				dateformat:   tt.fields.dateformat,
 				prefix:       tt.fields.prefix,
-				logdebug:     tt.fields.logdebug,
 				buffer:       tt.fields.buffer,
 			}
 			l.Fatalf(tt.args.err, tt.args.format, tt.args.v...)
@@ -925,7 +881,6 @@ func Test_alog_Custom(t *testing.T) {
 		location     *time.Location
 		dateformat   string
 		prefix       string
-		logdebug     bool
 		buffer       int
 	}
 	type args struct {
@@ -949,7 +904,6 @@ func Test_alog_Custom(t *testing.T) {
 				location:     tt.fields.location,
 				dateformat:   tt.fields.dateformat,
 				prefix:       tt.fields.prefix,
-				logdebug:     tt.fields.logdebug,
 				buffer:       tt.fields.buffer,
 			}
 			l.Custom(tt.args.ltype, tt.args.err, tt.args.v...)
@@ -965,7 +919,6 @@ func Test_alog_Customln(t *testing.T) {
 		location     *time.Location
 		dateformat   string
 		prefix       string
-		logdebug     bool
 		buffer       int
 	}
 	type args struct {
@@ -989,7 +942,6 @@ func Test_alog_Customln(t *testing.T) {
 				location:     tt.fields.location,
 				dateformat:   tt.fields.dateformat,
 				prefix:       tt.fields.prefix,
-				logdebug:     tt.fields.logdebug,
 				buffer:       tt.fields.buffer,
 			}
 			l.Customln(tt.args.ltype, tt.args.err, tt.args.v...)
@@ -1005,7 +957,6 @@ func Test_alog_Customf(t *testing.T) {
 		location     *time.Location
 		dateformat   string
 		prefix       string
-		logdebug     bool
 		buffer       int
 	}
 	type args struct {
@@ -1030,7 +981,6 @@ func Test_alog_Customf(t *testing.T) {
 				location:     tt.fields.location,
 				dateformat:   tt.fields.dateformat,
 				prefix:       tt.fields.prefix,
-				logdebug:     tt.fields.logdebug,
 				buffer:       tt.fields.buffer,
 			}
 			l.Customf(tt.args.ltype, tt.args.err, tt.args.format, tt.args.v...)
@@ -1046,7 +996,6 @@ func Test_alog_AddOutput(t *testing.T) {
 		location     *time.Location
 		dateformat   string
 		prefix       string
-		logdebug     bool
 		buffer       int
 	}
 	tests := []struct {
@@ -1065,7 +1014,6 @@ func Test_alog_AddOutput(t *testing.T) {
 				location:     tt.fields.location,
 				dateformat:   tt.fields.dateformat,
 				prefix:       tt.fields.prefix,
-				logdebug:     tt.fields.logdebug,
 				buffer:       tt.fields.buffer,
 			}
 			out := &bytes.Buffer{}
@@ -1085,7 +1033,6 @@ func Test_alog_Close(t *testing.T) {
 		location     *time.Location
 		dateformat   string
 		prefix       string
-		logdebug     bool
 		buffer       int
 	}
 	tests := []struct {
@@ -1103,7 +1050,6 @@ func Test_alog_Close(t *testing.T) {
 				location:     tt.fields.location,
 				dateformat:   tt.fields.dateformat,
 				prefix:       tt.fields.prefix,
-				logdebug:     tt.fields.logdebug,
 				buffer:       tt.fields.buffer,
 			}
 			l.Close()
@@ -1119,7 +1065,6 @@ func Test_alog_Validate(t *testing.T) {
 		location     *time.Location
 		dateformat   string
 		prefix       string
-		logdebug     bool
 		buffer       int
 	}
 	tests := []struct {
@@ -1138,7 +1083,6 @@ func Test_alog_Validate(t *testing.T) {
 				location:     tt.fields.location,
 				dateformat:   tt.fields.dateformat,
 				prefix:       tt.fields.prefix,
-				logdebug:     tt.fields.logdebug,
 				buffer:       tt.fields.buffer,
 			}
 			if gotValid := l.Validate(); gotValid != tt.wantValid {
@@ -1156,7 +1100,6 @@ func Test_alog_buildlog(t *testing.T) {
 		location     *time.Location
 		dateformat   string
 		prefix       string
-		logdebug     bool
 		buffer       int
 	}
 	type args struct {
@@ -1183,7 +1126,6 @@ func Test_alog_buildlog(t *testing.T) {
 				location:     tt.fields.location,
 				dateformat:   tt.fields.dateformat,
 				prefix:       tt.fields.prefix,
-				logdebug:     tt.fields.logdebug,
 				buffer:       tt.fields.buffer,
 			}
 			if gotNewlog := l.buildlog(tt.args.logtype, tt.args.custom, tt.args.err, tt.args.format, tt.args.v...); !reflect.DeepEqual(gotNewlog, tt.wantNewlog) {
@@ -1201,7 +1143,6 @@ func Test_alog_clog(t *testing.T) {
 		location     *time.Location
 		dateformat   string
 		prefix       string
-		logdebug     bool
 		buffer       int
 	}
 	type args struct {
@@ -1226,7 +1167,6 @@ func Test_alog_clog(t *testing.T) {
 				location:     tt.fields.location,
 				dateformat:   tt.fields.dateformat,
 				prefix:       tt.fields.prefix,
-				logdebug:     tt.fields.logdebug,
 				buffer:       tt.fields.buffer,
 			}
 			l.clog(tt.args.ctx, tt.args.v, tt.args.logtype, tt.args.custom)
@@ -1242,7 +1182,6 @@ func Test_alog_Printc(t *testing.T) {
 		location     *time.Location
 		dateformat   string
 		prefix       string
-		logdebug     bool
 		buffer       int
 	}
 	type args struct {
@@ -1265,7 +1204,6 @@ func Test_alog_Printc(t *testing.T) {
 				location:     tt.fields.location,
 				dateformat:   tt.fields.dateformat,
 				prefix:       tt.fields.prefix,
-				logdebug:     tt.fields.logdebug,
 				buffer:       tt.fields.buffer,
 			}
 			l.Printc(tt.args.ctx, tt.args.v)
@@ -1281,7 +1219,6 @@ func Test_alog_Debugc(t *testing.T) {
 		location     *time.Location
 		dateformat   string
 		prefix       string
-		logdebug     bool
 		buffer       int
 	}
 	type args struct {
@@ -1304,7 +1241,6 @@ func Test_alog_Debugc(t *testing.T) {
 				location:     tt.fields.location,
 				dateformat:   tt.fields.dateformat,
 				prefix:       tt.fields.prefix,
-				logdebug:     tt.fields.logdebug,
 				buffer:       tt.fields.buffer,
 			}
 			l.Debugc(tt.args.ctx, tt.args.v)
@@ -1320,7 +1256,6 @@ func Test_alog_Warnc(t *testing.T) {
 		location     *time.Location
 		dateformat   string
 		prefix       string
-		logdebug     bool
 		buffer       int
 	}
 	type args struct {
@@ -1343,7 +1278,6 @@ func Test_alog_Warnc(t *testing.T) {
 				location:     tt.fields.location,
 				dateformat:   tt.fields.dateformat,
 				prefix:       tt.fields.prefix,
-				logdebug:     tt.fields.logdebug,
 				buffer:       tt.fields.buffer,
 			}
 			l.Warnc(tt.args.ctx, tt.args.v)
@@ -1359,7 +1293,6 @@ func Test_alog_Errorc(t *testing.T) {
 		location     *time.Location
 		dateformat   string
 		prefix       string
-		logdebug     bool
 		buffer       int
 	}
 	type args struct {
@@ -1382,7 +1315,6 @@ func Test_alog_Errorc(t *testing.T) {
 				location:     tt.fields.location,
 				dateformat:   tt.fields.dateformat,
 				prefix:       tt.fields.prefix,
-				logdebug:     tt.fields.logdebug,
 				buffer:       tt.fields.buffer,
 			}
 			l.Errorc(tt.args.ctx, tt.args.v)
@@ -1398,7 +1330,6 @@ func Test_alog_Critc(t *testing.T) {
 		location     *time.Location
 		dateformat   string
 		prefix       string
-		logdebug     bool
 		buffer       int
 	}
 	type args struct {
@@ -1421,7 +1352,6 @@ func Test_alog_Critc(t *testing.T) {
 				location:     tt.fields.location,
 				dateformat:   tt.fields.dateformat,
 				prefix:       tt.fields.prefix,
-				logdebug:     tt.fields.logdebug,
 				buffer:       tt.fields.buffer,
 			}
 			l.Critc(tt.args.ctx, tt.args.v)
@@ -1437,7 +1367,6 @@ func Test_alog_Customc(t *testing.T) {
 		location     *time.Location
 		dateformat   string
 		prefix       string
-		logdebug     bool
 		buffer       int
 	}
 	type args struct {
@@ -1461,7 +1390,6 @@ func Test_alog_Customc(t *testing.T) {
 				location:     tt.fields.location,
 				dateformat:   tt.fields.dateformat,
 				prefix:       tt.fields.prefix,
-				logdebug:     tt.fields.logdebug,
 				buffer:       tt.fields.buffer,
 			}
 			l.Customc(tt.args.ctx, tt.args.v, tt.args.ltype)

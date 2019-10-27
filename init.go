@@ -67,7 +67,6 @@ func init() {
 		"",                   // No prefix
 		DEFAULTTIMEFORMAT,    // Standard time format
 		time.UTC,             // UTC logging
-		false,                // Debug logging disabled
 		DEFAULTBUFFER,        // Default buffer of 100 logs
 		Standards()...,       // Default destinations
 	); err != nil {
@@ -99,9 +98,9 @@ func setGlobal(logger Logger) (err error) {
 
 // Global instantiates a new logger using the passed in parameters and overwrites
 // the package global instance of the logger
-func Global(ctx context.Context, prefix string, dateformat string, location *time.Location, debug bool, buffer int, destinations ...Destination) (err error) {
+func Global(ctx context.Context, prefix string, dateformat string, location *time.Location, buffer int, destinations ...Destination) (err error) {
 	var newLogger Logger
-	if newLogger, err = New(ctx, prefix, dateformat, location, debug, buffer, destinations...); err == nil {
+	if newLogger, err = New(ctx, prefix, dateformat, location, buffer, destinations...); err == nil {
 		err = setGlobal(newLogger)
 	}
 
@@ -111,7 +110,7 @@ func Global(ctx context.Context, prefix string, dateformat string, location *tim
 // New creates a new logger using the information passed in to setup
 // the logging configuration rather than using the standard Stdout logger
 // that is initialized automatically
-func New(ctx context.Context, prefix string, dateformat string, location *time.Location, debug bool, buffer int, destinations ...Destination) (logger Logger, err error) {
+func New(ctx context.Context, prefix string, dateformat string, location *time.Location, buffer int, destinations ...Destination) (logger Logger, err error) {
 
 	if ctx == nil {
 		ctx = context.Background()
@@ -144,7 +143,6 @@ func New(ctx context.Context, prefix string, dateformat string, location *time.L
 			prefix:       prefix,
 			location:     time.UTC,
 			dateformat:   time.RFC3339,
-			logdebug:     debug,
 			buffer:       buffer,
 		}
 
