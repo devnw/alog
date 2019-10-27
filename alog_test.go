@@ -3,13 +3,44 @@ package alog
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 func Test_alog_global(t *testing.T) {
-	Println("HELLO WORLD")
+
+	mock := &writemock{make(chan []byte)}
+
+	dest := Destination{
+		INFO | DEBUG | WARN | ERROR | CRIT | FATAL | CUSTOM,
+		JSON,
+		mock,
+	}
+
+	if err := Global(
+		context.Background(),
+		"",
+		DEFAULTTIMEFORMAT,
+		time.UTC,
+		false,
+		DEFAULTBUFFER,
+		dest,
+	); err == nil {
+
+		Critln(errors.New("TEST ERROR"), "HELLO WORLD")
+
+		fmt.Println(string(<-mock.msg))
+
+		Close()
+		Wait()
+
+	} else {
+		fmt.Println(err)
+	}
 }
 
 func Test_alog_init(t *testing.T) {

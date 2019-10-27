@@ -21,7 +21,7 @@ func (l log) String() (output string) {
 
 	err := ""
 	if l.err != nil {
-		err = fmt.Sprintf(" %s", l.err)
+		err = fmt.Sprintf(" | err: %s", l.err.Error())
 	}
 
 	message := ""
@@ -32,14 +32,14 @@ func (l log) String() (output string) {
 
 	// Handle the empty message and error section
 	if len(err) == 0 && len(message) == 0 {
-		message = "Unable to create log string, empty message and error"
+		message = "unable to create log string, empty message and error"
 	}
 
-	output = fmt.Sprintf("%s %s%s%s\n",
+	output = fmt.Sprintf("%s [%s]%s%s\n",
 		l.timestamp.Format(l.logger.dateformat),
 		l.Type(),
-		err,
 		message,
+		err,
 	)
 
 	return output
@@ -106,16 +106,22 @@ func (l log) getmessage(v interface{}) (message string) {
 // down a log into a json struct for simpler parsing
 func (l log) MarshalJSON() ([]byte, error) {
 
+	var err *string
+	if l.err != nil {
+		e := l.err.Error()
+		err = &e
+	}
+
 	// Setup a new flattened struct for json dumps of the logs
 	output := &struct {
 		LogType   string   `json:"type"`
 		Timestamp string   `json:"timestamp"`
-		Error     error    `json:"error,omitempty"`
+		Error     *string  `json:"error,omitempty"`
 		Messages  []string `json:"messages"`
 	}{
 		l.Type(),
 		l.timestamp.Format(l.logger.dateformat),
-		l.err,
+		err,
 		l.getmessages(l.values),
 	}
 
@@ -138,7 +144,7 @@ func (l log) Type() (t string) {
 	} else if l.logtype&CUSTOM > 0 {
 		t = "CUSTOM"
 		if len(l.customtype) > 0 {
-			t = l.customtype
+			t = strings.ToUpper(l.customtype)
 		}
 	} else {
 		t = "INFO"

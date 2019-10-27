@@ -350,6 +350,7 @@ func (l *alog) Critf(err error, format string, v ...interface{}) {
 // Fatal creates a fatal log using the error and values passed into the method
 // After logging the fatal log the Fatal method throws a panic to crash the application
 func (l *alog) Fatal(err error, v ...interface{}) {
+	defer l.cancel()
 	l.send(l.ctx, l.buildlog(FATAL, "", err, nil, v...))
 
 	// TODO: Update panic to include information about the fatal, as well as stack trace information
@@ -360,6 +361,7 @@ func (l *alog) Fatal(err error, v ...interface{}) {
 // Each error and value is printed on a different line
 // After logging the fatal log the Fatalln method throws a panic to crash the application
 func (l *alog) Fatalln(err error, v ...interface{}) {
+	defer l.cancel()
 	for _, value := range v {
 		l.send(l.ctx, l.buildlog(FATAL, "", err, nil, value))
 	}
@@ -372,6 +374,7 @@ func (l *alog) Fatalln(err error, v ...interface{}) {
 // formatting and values
 // After logging the fatal log the Fatalf method throws a panic to crash the application
 func (l *alog) Fatalf(err error, format string, v ...interface{}) {
+	defer l.cancel()
 	l.send(l.ctx, l.buildlog(FATAL, "", err, &format, v...))
 
 	// TODO: Update panic to include information about the fatal, as well as stack trace information
@@ -430,4 +433,9 @@ func (l *alog) Validate() (valid bool) {
 	}
 
 	return valid
+}
+
+// Wait blocks on the logger context until the context is closed
+func (l *alog) Wait() {
+	<-l.ctx.Done()
 }

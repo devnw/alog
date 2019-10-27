@@ -116,4 +116,7 @@ type Logger interface {
 	// Close cancels the context throughout the logger and closes
 	// all read / write operations across the logger and IO
 	Close()
+
+	// Wait blocks on the logger context until the context is closed
+	Wait()
 }

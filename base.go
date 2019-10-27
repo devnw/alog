@@ -156,3 +156,14 @@ func Customln(ltype string, err error, v ...interface{}) {
 func Customf(ltype string, err error, format string, v ...interface{}) {
 	instance.Customf(ltype, err, format, v)
 }
+
+// Close cancels the context throughout the logger and closes
+// all read / write operations across the logger and IO
+func Close() {
+	instance.Close()
+}
+
+// Wait blocks on the logger context until the context is closed
+func Wait() {
+	instance.Wait()
+}
