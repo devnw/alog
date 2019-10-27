@@ -17,7 +17,7 @@ func Test_alog_global(t *testing.T) {
 
 	dest := Destination{
 		INFO | DEBUG | WARN | ERROR | CRIT | FATAL | CUSTOM,
-		JSON,
+		STD,
 		mock,
 	}
 
@@ -30,6 +30,18 @@ func Test_alog_global(t *testing.T) {
 		DEFAULTBUFFER,
 		dest,
 	); err == nil {
+
+		Critln(errors.New("TEST ERROR"), "HELLO WORLD")
+
+		fmt.Println(string(<-mock.msg))
+
+		Critln(errors.New("TEST ERROR"), "HELLO WORLD")
+
+		fmt.Println(string(<-mock.msg))
+
+		Critln(errors.New("TEST ERROR"), "HELLO WORLD")
+
+		fmt.Println(string(<-mock.msg))
 
 		Critln(errors.New("TEST ERROR"), "HELLO WORLD")
 

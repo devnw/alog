@@ -94,12 +94,6 @@ func (l *alog) listen(ctx context.Context, destination Destination) chan<- log {
 		// TODO: handle panic
 		defer close(logs)
 
-		// Setup the prefix to be prepended to the beginning
-		prefix := ""
-		if len(l.prefix) > 0 {
-			prefix = fmt.Sprintf("%s ", l.prefix)
-		}
-
 		for {
 			select {
 			case <-ctx.Done():
@@ -122,7 +116,7 @@ func (l *alog) listen(ctx context.Context, destination Destination) chan<- log {
 							message = l.String()
 						}
 
-						fmt.Fprintf(destination.Writer, "%s%s", prefix, string(message))
+						fmt.Fprint(destination.Writer, string(message))
 					} else {
 						// TODO:
 					}

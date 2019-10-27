@@ -30,12 +30,18 @@ func (l log) String() (output string) {
 		message = fmt.Sprintf(" %s", strings.Join(strs, ","))
 	}
 
+	prefix := ""
+	if len(l.logger.prefix) > 0 {
+		prefix = fmt.Sprintf("%s ", l.logger.prefix)
+	}
+
 	// Handle the empty message and error section
 	if len(err) == 0 && len(message) == 0 {
 		message = "unable to create log string, empty message and error"
 	}
 
-	output = fmt.Sprintf("%s [%s]%s%s\n",
+	output = fmt.Sprintf("%s%s [%s]%s%s",
+		prefix,
 		l.timestamp.Format(l.logger.dateformat),
 		l.Type(),
 		message,
@@ -112,13 +118,20 @@ func (l log) MarshalJSON() ([]byte, error) {
 		err = &e
 	}
 
+	var prefix *string
+	if len(l.logger.prefix) > 0 {
+		prefix = &l.logger.prefix
+	}
+
 	// Setup a new flattened struct for json dumps of the logs
 	output := &struct {
+		Prefix    *string  `json:"prefix,omitempty"`
 		LogType   string   `json:"type"`
 		Timestamp string   `json:"timestamp"`
 		Error     *string  `json:"error,omitempty"`
 		Messages  []string `json:"messages"`
 	}{
+		prefix,
 		l.Type(),
 		l.timestamp.Format(l.logger.dateformat),
 		err,

@@ -5,7 +5,6 @@ type writemock struct {
 }
 
 func (w *writemock) Write(p []byte) (n int, err error) {
-	defer close(w.msg)
 	w.msg <- p
 
 	return n, err
