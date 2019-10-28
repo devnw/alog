@@ -26,13 +26,13 @@ type Logger interface {
 	Debugc(ctx context.Context, v <-chan interface{})
 
 	// Debug creates debugging logs based on the inputs
-	Debug(v ...interface{})
+	Debug(err error, v ...interface{})
 
 	// Debugln prints the data coming in as a debug log on individual lines
-	Debugln(v ...interface{})
+	Debugln(err error, v ...interface{})
 
 	// Debugf creates an debugging log using the format and values
-	Debugf(format string, v ...interface{})
+	Debugf(err error, format string, v ...interface{})
 
 	// Warnc creates warning logs based on the data coming from the
 	// concurrency channel that is passed in for processing

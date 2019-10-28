@@ -81,9 +81,8 @@ func (l *alog) init() (err error) {
 func (l *alog) listen(ctx context.Context, destination Destination) chan<- log {
 	logs := make(chan log)
 
-	go func(ctx context.Context, logs chan log, destination Destination) {
+	go func(ctx context.Context, logs <-chan log, destination Destination) {
 		// TODO: handle panic
-		defer close(logs)
 
 		for {
 			select {
@@ -232,20 +231,20 @@ func (l *alog) Debugc(ctx context.Context, v <-chan interface{}) {
 }
 
 // Debug creates debugging logs based on the inputs
-func (l *alog) Debug(v ...interface{}) {
-	l.send(l.ctx, l.buildlog(DEBUG, "", nil, nil, v...))
+func (l *alog) Debug(err error, v ...interface{}) {
+	l.send(l.ctx, l.buildlog(DEBUG, "", err, nil, v...))
 }
 
 // Debugln prints the data coming in as a debug log on individual lines
-func (l *alog) Debugln(v ...interface{}) {
+func (l *alog) Debugln(err error, v ...interface{}) {
 	for _, value := range v {
-		l.send(l.ctx, l.buildlog(DEBUG, "", nil, nil, value))
+		l.send(l.ctx, l.buildlog(DEBUG, "", err, nil, value))
 	}
 }
 
 // Debugf creates an debugging log using the format and values
-func (l *alog) Debugf(format string, v ...interface{}) {
-	l.send(l.ctx, l.buildlog(DEBUG, "", nil, &format, v...))
+func (l *alog) Debugf(err error, format string, v ...interface{}) {
+	l.send(l.ctx, l.buildlog(DEBUG, "", err, &format, v...))
 }
 
 // Warnc creates warning logs based on the data coming from the

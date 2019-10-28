@@ -99,13 +99,14 @@ func TestDebug(t *testing.T) {
 	}
 	tests := []struct {
 		name string
+		err  error
 		args args
 	}{
 		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			Debug(tt.args.v...)
+			Debug(tt.err, tt.args.v...)
 		})
 	}
 }
@@ -116,13 +117,14 @@ func TestDebugln(t *testing.T) {
 	}
 	tests := []struct {
 		name string
+		err  error
 		args args
 	}{
 		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			Debugln(tt.args.v...)
+			Debugln(tt.err, tt.args.v...)
 		})
 	}
 }
@@ -134,13 +136,14 @@ func TestDebugf(t *testing.T) {
 	}
 	tests := []struct {
 		name string
+		err  error
 		args args
 	}{
 		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			Debugf(tt.args.format, tt.args.v...)
+			Debugf(tt.err, tt.args.format, tt.args.v...)
 		})
 	}
 }

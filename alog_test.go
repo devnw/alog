@@ -4,55 +4,177 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"math/rand"
 	"reflect"
 	"testing"
 	"time"
 
+	"github.com/Pallinder/go-randomdata"
 	"github.com/pkg/errors"
 )
 
-func Test_alog_global(t *testing.T) {
+type fakelog struct {
+	tp   int8
+	text string
+	err  error
+}
 
-	mock := &writemock{make(chan []byte)}
+func randtypes(ctx context.Context, count int) <-chan fakelog {
+	rand.Seed(time.Now().UnixNano())
+	rands := make(chan fakelog)
+
+	go func(rands chan<- fakelog) {
+		defer close(rands)
+
+		i := 0
+		for i < count {
+			v := rand.Intn(CUSTOM-INFO+1) + INFO
+
+			if v <= CUSTOM {
+				var e error
+				if v&INFO == 0 {
+					e = errors.New(randomdata.SillyName())
+				}
+
+				fl := fakelog{
+					int8(v),
+					randomdata.SillyName(),
+					e,
+				}
+
+				select {
+				case <-ctx.Done():
+					return
+				case rands <- fl:
+					i++
+				}
+			}
+		}
+	}(rands)
+
+	return rands
+}
+
+func Test_alog_2global(t *testing.T) {
+
+	mock := &writemock{}
 
 	dest := Destination{
-		INFO | WARN | ERROR | CRIT | FATAL | CUSTOM,
+		INFO | DEBUG | WARN | ERROR | CRIT | FATAL | CUSTOM,
 		STD,
 		mock,
 	}
+	ctx, cancel := context.WithCancel(context.Background())
 
 	if err := Global(
-		context.Background(),
+		ctx,
 		"",
 		DEFAULTTIMEFORMAT,
 		time.UTC,
 		DEFAULTBUFFER,
 		dest,
 	); err == nil {
+		ls := randtypes(ctx, 10)
 
-		Critln(errors.New("TEST ERROR"), "HELLO WORLD")
+		// go func() {
+		// 	for {
+		// 		select {
+		// 		case <-ctx.Done():
+		// 			return
+		// 		case msg, ok := <-mock.msg:
+		// 			if ok {
+		// 				fmt.Println(string(msg))
+		// 			} else {
+		// 				return
+		// 			}
+		// 		}
+		// 	}
+		// }()
+		defer cancel()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case l, ok := <-ls:
+				if ok {
+					if l.tp&INFO > 0 {
+						Println(l.text)
+					} else if l.tp&DEBUG > 0 {
 
-		fmt.Println(string(<-mock.msg))
+						Debugln(l.err, l.text)
+					} else if l.tp&WARN > 0 {
 
-		Println(errors.New("TEST ERROR"), "HELLO WORLD")
+						Warnln(l.err, l.text)
+					} else if l.tp&ERROR > 0 {
 
-		fmt.Println(string(<-mock.msg))
+						Errorln(l.err, l.text)
+					} else if l.tp&CRIT > 0 {
 
-		Debugln(errors.New("TEST ERROR"), "HELLO WORLD")
+						Critln(l.err, l.text)
+					} else if l.tp&FATAL > 0 {
+						defer func() {
+							recover()
+						}()
 
-		// NO DEBUG DEST fmt.Println(string(<-mock.msg))
+						Fatalln(l.err, l.text)
+					} else if l.tp&CUSTOM > 0 {
 
-		Critln(errors.New("TEST ERROR"), "HELLO WORLD")
-
-		fmt.Println(string(<-mock.msg))
-
-		Close()
-		Wait()
+						Customln(randomdata.SillyName(), l.err, l.text)
+					}
+				} else {
+					return
+				}
+			}
+		}
 
 	} else {
+		cancel()
 		fmt.Println(err)
 	}
 }
+
+// func Test_alog_global(t *testing.T) {
+
+// 	mock := &writemock{make(chan []byte)}
+
+// 	dest := Destination{
+// 		INFO | WARN | ERROR | CRIT | FATAL | CUSTOM,
+// 		STD,
+// 		mock,
+// 	}
+
+// 	if err := Global(
+// 		context.Background(),
+// 		"",
+// 		DEFAULTTIMEFORMAT,
+// 		time.UTC,
+// 		DEFAULTBUFFER,
+// 		dest,
+// 	); err == nil {
+
+// 		Critln(errors.New("TEST ERROR"), "HELLO WORLD")
+
+// 		fmt.Println(string(<-mock.msg))
+
+// 		Println(errors.New("TEST ERROR"), "HELLO WORLD")
+
+// 		fmt.Println(string(<-mock.msg))
+
+// 		Debugln(errors.New("TEST ERROR"), "HELLO WORLD")
+
+// 		// NO DEBUG DEST fmt.Println(string(<-mock.msg))
+
+// 		Critln(errors.New("TEST ERROR"), "HELLO WORLD")
+
+// 		fmt.Println(string(<-mock.msg))
+
+// 		Close()
+// 		Wait()
+
+// 	} else {
+// 		fmt.Println(err)
+// 	}
+// }
 
 func Test_alog_init(t *testing.T) {
 	type fields struct {
@@ -332,6 +454,7 @@ func Test_alog_Debug(t *testing.T) {
 	tests := []struct {
 		name   string
 		fields fields
+		err    error
 		args   args
 	}{
 		// TODO: Add test cases.
@@ -347,7 +470,7 @@ func Test_alog_Debug(t *testing.T) {
 				prefix:       tt.fields.prefix,
 				buffer:       tt.fields.buffer,
 			}
-			l.Debug(tt.args.v...)
+			l.Debug(tt.err, tt.args.v...)
 		})
 	}
 }
@@ -368,6 +491,7 @@ func Test_alog_Debugln(t *testing.T) {
 	tests := []struct {
 		name   string
 		fields fields
+		err    error
 		args   args
 	}{
 		// TODO: Add test cases.
@@ -383,7 +507,7 @@ func Test_alog_Debugln(t *testing.T) {
 				prefix:       tt.fields.prefix,
 				buffer:       tt.fields.buffer,
 			}
-			l.Debugln(tt.args.v...)
+			l.Debugln(tt.err, tt.args.v...)
 		})
 	}
 }
@@ -405,6 +529,7 @@ func Test_alog_Debugf(t *testing.T) {
 	tests := []struct {
 		name   string
 		fields fields
+		err    error
 		args   args
 	}{
 		// TODO: Add test cases.
@@ -420,7 +545,7 @@ func Test_alog_Debugf(t *testing.T) {
 				prefix:       tt.fields.prefix,
 				buffer:       tt.fields.buffer,
 			}
-			l.Debugf(tt.args.format, tt.args.v...)
+			l.Debugf(tt.err, tt.args.format, tt.args.v...)
 		})
 	}
 }

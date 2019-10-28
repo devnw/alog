@@ -30,18 +30,18 @@ func Debugc(ctx context.Context, v <-chan interface{}) {
 }
 
 // Debug creates debugging logs based on the inputs
-func Debug(v ...interface{}) {
-	instance.Debug(v)
+func Debug(err error, v ...interface{}) {
+	instance.Debug(err, v)
 }
 
 // Debugln prints the data coming in as a debug log on individual lines
-func Debugln(v ...interface{}) {
-	instance.Debugln(v)
+func Debugln(err error, v ...interface{}) {
+	instance.Debugln(err, v)
 }
 
 // Debugf creates an debugging log using the format and values
-func Debugf(format string, v ...interface{}) {
-	instance.Debugf(format, v)
+func Debugf(err error, format string, v ...interface{}) {
+	instance.Debugf(err, format, v)
 }
 
 // Warnc creates warning logs based on the data coming from the
