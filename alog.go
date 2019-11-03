@@ -367,14 +367,25 @@ func (l *alog) Critf(err error, format string, v ...interface{}) error {
 	return l.send(l.ctx, l.buildlog(CRIT, "", err, &format, v...))
 }
 
+func (l *alog) fpanic(err error, out error) {
+
+	if out != nil && err != nil {
+		err = errors.Errorf("error while sending fatal log %s | log: %s", out.Error(), err.Error())
+	} else if err == nil {
+		err = errors.New("fatal error panic")
+	}
+
+	// TODO: Update panic to include information about the fatal, as well as stack trace information
+	panic(err)
+}
+
 // Fatal creates a fatal log using the error and values passed into the method
 // After logging the fatal log the Fatal method throws a panic to crash the application
 func (l *alog) Fatal(err error, v ...interface{}) {
 	defer l.cancel()
 	out := l.send(l.ctx, l.buildlog(FATAL, "", err, nil, v...))
 
-	// TODO: Update panic to include information about the fatal, as well as stack trace information
-	panic(out)
+	l.fpanic(err, out)
 }
 
 // Fatalln creates fatal logs using the error and other values passed in.
@@ -392,8 +403,7 @@ func (l *alog) Fatalln(err error, v ...interface{}) {
 		}
 	}
 
-	// TODO: Update panic to include information about the fatal, as well as stack trace information
-	panic(out)
+	l.fpanic(err, out)
 }
 
 // Fatalf creates an error log using the error passed in, along with the string
@@ -404,8 +414,7 @@ func (l *alog) Fatalf(err error, format string, v ...interface{}) {
 
 	out := l.send(l.ctx, l.buildlog(FATAL, "", err, &format, v...))
 
-	// TODO: Update panic to include information about the fatal, as well as stack trace information
-	panic(out)
+	l.fpanic(err, out)
 }
 
 // Customc creates custom logs based on the data coming from the

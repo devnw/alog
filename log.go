@@ -47,6 +47,10 @@ func (l log) String() (output string) {
 		err,
 	)
 
+	if !strings.Contains(output, "\n") {
+		output = fmt.Sprintf("%s\n", output)
+	}
+
 	return output
 }
 
