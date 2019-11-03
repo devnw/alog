@@ -76,41 +76,28 @@ func Test_alog_2global(t *testing.T) {
 	); err == nil {
 		ls := randtypes(ctx, 10)
 
-		// go func() {
-		// 	for {
-		// 		select {
-		// 		case <-ctx.Done():
-		// 			return
-		// 		case msg, ok := <-mock.msg:
-		// 			if ok {
-		// 				fmt.Println(string(msg))
-		// 			} else {
-		// 				return
-		// 			}
-		// 		}
-		// 	}
-		// }()
 		defer cancel()
 		for {
+			var err error
 			select {
 			case <-ctx.Done():
 				return
 			case l, ok := <-ls:
 				if ok {
 					if l.tp&INFO > 0 {
-						Println(l.text)
+						err = Println(l.text)
 					} else if l.tp&DEBUG > 0 {
 
-						Debugln(l.err, l.text)
+						err = Debugln(l.err, l.text)
 					} else if l.tp&WARN > 0 {
 
-						Warnln(l.err, l.text)
+						err = Warnln(l.err, l.text)
 					} else if l.tp&ERROR > 0 {
 
-						Errorln(l.err, l.text)
+						err = Errorln(l.err, l.text)
 					} else if l.tp&CRIT > 0 {
 
-						Critln(l.err, l.text)
+						err = Critln(l.err, l.text)
 					} else if l.tp&FATAL > 0 {
 						defer func() {
 							recover()
@@ -119,62 +106,66 @@ func Test_alog_2global(t *testing.T) {
 						Fatalln(l.err, l.text)
 					} else if l.tp&CUSTOM > 0 {
 
-						Customln(randomdata.SillyName(), l.err, l.text)
+						err = Customln(randomdata.SillyName(), l.err, l.text)
 					}
 				} else {
 					return
 				}
 			}
+
+			if err != nil {
+				t.Error(err)
+			}
 		}
 
 	} else {
 		cancel()
-		fmt.Println(err)
+		t.Error(err)
 	}
 }
 
-// func Test_alog_global(t *testing.T) {
+func Test_alog_global(t *testing.T) {
 
-// 	mock := &writemock{make(chan []byte)}
+	mock := &passmock{make(chan []byte)}
 
-// 	dest := Destination{
-// 		INFO | WARN | ERROR | CRIT | FATAL | CUSTOM,
-// 		STD,
-// 		mock,
-// 	}
+	dest := Destination{
+		INFO | WARN | ERROR | CRIT | FATAL | CUSTOM,
+		STD,
+		mock,
+	}
 
-// 	if err := Global(
-// 		context.Background(),
-// 		"",
-// 		DEFAULTTIMEFORMAT,
-// 		time.UTC,
-// 		DEFAULTBUFFER,
-// 		dest,
-// 	); err == nil {
+	if err := Global(
+		context.Background(),
+		"",
+		DEFAULTTIMEFORMAT,
+		time.UTC,
+		DEFAULTBUFFER,
+		dest,
+	); err == nil {
 
-// 		Critln(errors.New("TEST ERROR"), "HELLO WORLD")
+		err = Critln(errors.New("TEST ERROR"), "HELLO WORLD")
 
-// 		fmt.Println(string(<-mock.msg))
+		fmt.Println(string(<-mock.msg))
 
-// 		Println(errors.New("TEST ERROR"), "HELLO WORLD")
+		err = Println(errors.New("TEST ERROR"), "HELLO WORLD")
 
-// 		fmt.Println(string(<-mock.msg))
+		fmt.Println(string(<-mock.msg))
 
-// 		Debugln(errors.New("TEST ERROR"), "HELLO WORLD")
+		err = Debugln(errors.New("TEST ERROR"), "HELLO WORLD")
 
-// 		// NO DEBUG DEST fmt.Println(string(<-mock.msg))
+		// NO DEBUG DEST fmt.Println(string(<-mock.msg))
 
-// 		Critln(errors.New("TEST ERROR"), "HELLO WORLD")
+		err = Critln(errors.New("TEST ERROR"), "HELLO WORLD")
 
-// 		fmt.Println(string(<-mock.msg))
+		fmt.Println(string(<-mock.msg))
 
-// 		Close()
-// 		Wait()
+		Close()
+		Wait()
 
-// 	} else {
-// 		fmt.Println(err)
-// 	}
-// }
+	} else {
+		fmt.Println(err)
+	}
+}
 
 func Test_alog_init(t *testing.T) {
 	type fields struct {

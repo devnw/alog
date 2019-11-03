@@ -19,6 +19,7 @@ type Destination struct {
 // INFO, DEBUG, WARNING, CUSTOM Logs are logged to Standard Out
 // ERROR, CRITICAL, FATAL Logs are logged to Standard Error
 func Standards() []Destination {
+
 	return []Destination{
 		{
 			INFO | DEBUG | WARN | CUSTOM,

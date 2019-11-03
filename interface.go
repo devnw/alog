@@ -13,26 +13,26 @@ type Logger interface {
 	Printc(ctx context.Context, v <-chan interface{})
 
 	// Print creates informational logs based on the inputs
-	Print(v ...interface{})
+	Print(v ...interface{}) error
 
 	// Println prints the data coming in as an informational log on individual lines
-	Println(v ...interface{})
+	Println(v ...interface{}) error
 
 	// Printf creates an informational log using the format and values
-	Printf(format string, v ...interface{})
+	Printf(format string, v ...interface{}) error
 
 	// Debugc creates debug logs based on the data coming from the
 	// concurrency channel that is passed in for processing
 	Debugc(ctx context.Context, v <-chan interface{})
 
 	// Debug creates debugging logs based on the inputs
-	Debug(err error, v ...interface{})
+	Debug(err error, v ...interface{}) error
 
 	// Debugln prints the data coming in as a debug log on individual lines
-	Debugln(err error, v ...interface{})
+	Debugln(err error, v ...interface{}) error
 
 	// Debugf creates an debugging log using the format and values
-	Debugf(err error, format string, v ...interface{})
+	Debugf(err error, format string, v ...interface{}) error
 
 	// Warnc creates warning logs based on the data coming from the
 	// concurrency channel that is passed in for processing
@@ -40,45 +40,45 @@ type Logger interface {
 
 	// Warn creates a warning log using the error passed in along with the
 	// values passed in
-	Warn(err error, v ...interface{})
+	Warn(err error, v ...interface{}) error
 
 	// Warnln creates a warning log using the error and values passed in.
 	// Each error and value is printed on a different line
-	Warnln(err error, v ...interface{})
+	Warnln(err error, v ...interface{}) error
 
 	// Warnf creates a warning log using the error passed in, along with the string
 	// formatting and values
-	Warnf(err error, format string, v ...interface{})
+	Warnf(err error, format string, v ...interface{}) error
 
 	// Errorc creates error logs based on the data coming from the
 	// concurrency channel that is passed in for processing
 	Errorc(ctx context.Context, v <-chan interface{})
 
 	// Error creates an error log using the error and other values passed in
-	Error(err error, v ...interface{})
+	Error(err error, v ...interface{}) error
 
 	// Error creates error logs using the error and other values passed in.
 	// Each error and value is printed on a different line
-	Errorln(err error, v ...interface{})
+	Errorln(err error, v ...interface{}) error
 
 	// Errorf creates an error log using the error passed in, along with the string
 	// formatting and values
-	Errorf(err error, format string, v ...interface{})
+	Errorf(err error, format string, v ...interface{}) error
 
 	// Critc creates critical logs based on the data coming from the
 	// concurrency channel that is passed in for processing
 	Critc(ctx context.Context, v <-chan interface{})
 
 	// Crit creates critical logs using the error and other values passed in
-	Crit(err error, v ...interface{})
+	Crit(err error, v ...interface{}) error
 
 	// Critln creates critical logs using the error and other values passed in.
 	// Each error and value is printed on a different line
-	Critln(err error, v ...interface{})
+	Critln(err error, v ...interface{}) error
 
 	// Critf creates a critical log using the error passed in, along with the string
 	// formatting and values
-	Critf(err error, format string, v ...interface{})
+	Critf(err error, format string, v ...interface{}) error
 
 	// Fatal creates a fatal log using the error and values passed into the method
 	// After logging the fatal log the Fatal method throws a panic to crash the application
@@ -99,15 +99,15 @@ type Logger interface {
 	Customc(ctx context.Context, v <-chan interface{}, ltype string)
 
 	// Custom creates a custom log using the error and values passed into the method
-	Custom(ltype string, err error, v ...interface{})
+	Custom(ltype string, err error, v ...interface{}) error
 
 	// Customln creates custom logs using the error and other values passed in.
 	// Each error and value is printed on a different line
-	Customln(ltype string, err error, v ...interface{})
+	Customln(ltype string, err error, v ...interface{}) error
 
 	// Customf creates a custom log using the error passed in, along with the string
 	// formatting and values
-	Customf(ltype string, err error, format string, v ...interface{})
+	Customf(ltype string, err error, format string, v ...interface{}) error
 
 	// AddOutput adds an additional logging source to the logger which
 	// will be added to the different logging outputs for this logger
