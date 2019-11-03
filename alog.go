@@ -367,33 +367,20 @@ func (l *alog) Critf(err error, format string, v ...interface{}) error {
 	return l.send(l.ctx, l.buildlog(CRIT, "", err, &format, v...))
 }
 
-func (l *alog) fpanic(err error, out error) {
-
-	if out != nil && err != nil {
-		err = errors.Errorf("error while sending fatal log %s | log: %s", out.Error(), err.Error())
-	} else if err == nil {
-		err = errors.New("fatal error panic")
-	}
-
-	// TODO: Update panic to include information about the fatal, as well as stack trace information
-	panic(err)
+// Fatalc creates fatal logs based on the data coming from the
+// concurrency channel that is passed in for processing
+func (l *alog) Fatalc(ctx context.Context, v <-chan interface{}) {
+	l.clog(ctx, v, FATAL, "")
 }
 
 // Fatal creates a fatal log using the error and values passed into the method
-// After logging the fatal log the Fatal method throws a panic to crash the application
-func (l *alog) Fatal(err error, v ...interface{}) {
-	defer l.cancel()
-	out := l.send(l.ctx, l.buildlog(FATAL, "", err, nil, v...))
-
-	l.fpanic(err, out)
+func (l *alog) Fatal(err error, v ...interface{}) error {
+	return l.send(l.ctx, l.buildlog(FATAL, "", err, nil, v...))
 }
 
 // Fatalln creates fatal logs using the error and other values passed in.
 // Each error and value is printed on a different line
-// After logging the fatal log the Fatalln method throws a panic to crash the application
-func (l *alog) Fatalln(err error, v ...interface{}) {
-	defer l.cancel()
-
+func (l *alog) Fatalln(err error, v ...interface{}) error {
 	var out error
 	for _, value := range v {
 		if out = l.send(l.ctx, l.buildlog(FATAL, "", err, nil, value)); out != nil {
@@ -403,18 +390,13 @@ func (l *alog) Fatalln(err error, v ...interface{}) {
 		}
 	}
 
-	l.fpanic(err, out)
+	return out
 }
 
 // Fatalf creates an error log using the error passed in, along with the string
 // formatting and values
-// After logging the fatal log the Fatalf method throws a panic to crash the application
-func (l *alog) Fatalf(err error, format string, v ...interface{}) {
-	defer l.cancel()
-
-	out := l.send(l.ctx, l.buildlog(FATAL, "", err, &format, v...))
-
-	l.fpanic(err, out)
+func (l *alog) Fatalf(err error, format string, v ...interface{}) error {
+	return l.send(l.ctx, l.buildlog(FATAL, "", err, &format, v...))
 }
 
 // Customc creates custom logs based on the data coming from the

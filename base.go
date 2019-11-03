@@ -114,24 +114,27 @@ func Critf(err error, format string, v ...interface{}) error {
 	return instance.Critf(err, format, v)
 }
 
+// Fatalc creates fatal logs based on the data coming from the
+// concurrency channel that is passed in for processing
+func Fatalc(ctx context.Context, v <-chan interface{}) {
+	instance.Fatalc(ctx, v)
+}
+
 // Fatal creates a fatal log using the error and values passed into the method
-// After logging the fatal log the Fatal method throws a panic to crash the application
-func Fatal(err error, v ...interface{}) {
-	instance.Fatal(err, v)
+func Fatal(err error, v ...interface{}) error {
+	return instance.Fatal(err, v)
 }
 
 // Fatalln creates fatal logs using the error and other values passed in.
 // Each error and value is printed on a different line
-// After logging the fatal log the Fatalln method throws a panic to crash the application
-func Fatalln(err error, v ...interface{}) {
-	instance.Fatalln(err, v)
+func Fatalln(err error, v ...interface{}) error {
+	return instance.Fatalln(err, v)
 }
 
 // Fatalf creates an error log using the error passed in, along with the string
 // formatting and values
-// After logging the fatal log the Fatalf method throws a panic to crash the application
-func Fatalf(err error, format string, v ...interface{}) {
-	instance.Fatalf(err, format, v)
+func Fatalf(err error, format string, v ...interface{}) error {
+	return instance.Fatalf(err, format, v)
 }
 
 // Customc creates custom logs based on the data coming from the
