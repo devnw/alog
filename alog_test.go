@@ -78,26 +78,25 @@ func Test_alog_2global(t *testing.T) {
 
 		defer cancel()
 		for {
-			var err error
 			select {
 			case <-ctx.Done():
 				return
 			case l, ok := <-ls:
 				if ok {
 					if l.tp&INFO > 0 {
-						err = Println(l.text)
+						Println(l.text)
 					} else if l.tp&DEBUG > 0 {
 
-						err = Debugln(l.err, l.text)
+						Debugln(l.err, l.text)
 					} else if l.tp&WARN > 0 {
 
-						err = Warnln(l.err, l.text)
+						Warnln(l.err, l.text)
 					} else if l.tp&ERROR > 0 {
 
-						err = Errorln(l.err, l.text)
+						Errorln(l.err, l.text)
 					} else if l.tp&CRIT > 0 {
 
-						err = Critln(l.err, l.text)
+						Critln(l.err, l.text)
 					} else if l.tp&FATAL > 0 {
 						defer func() {
 							recover()
@@ -106,15 +105,11 @@ func Test_alog_2global(t *testing.T) {
 						Fatalln(l.err, l.text)
 					} else if l.tp&CUSTOM > 0 {
 
-						err = Customln(randomdata.SillyName(), l.err, l.text)
+						Customln(randomdata.SillyName(), l.err, l.text)
 					}
 				} else {
 					return
 				}
-			}
-
-			if err != nil {
-				t.Error(err)
 			}
 		}
 
@@ -143,24 +138,23 @@ func Test_alog_global(t *testing.T) {
 		dest,
 	); err == nil {
 
-		err = Critln(errors.New("TEST ERROR"), "HELLO WORLD")
+		Critln(errors.New("TEST CRIT"), "HELLO WORLD")
 
 		fmt.Println(string(<-mock.msg))
 
-		err = Println(errors.New("TEST ERROR"), "HELLO WORLD")
+		Println("HELLO WORLD")
 
 		fmt.Println(string(<-mock.msg))
 
-		err = Debugln(errors.New("TEST ERROR"), "HELLO WORLD")
+		Debugln(errors.New("TEST DEBUG"), "HELLO WORLD")
 
 		// NO DEBUG DEST fmt.Println(string(<-mock.msg))
 
-		err = Critln(errors.New("TEST ERROR"), "HELLO WORLD")
+		Critln(errors.New("TEST CRIT"), "HELLO WORLD")
 
 		fmt.Println(string(<-mock.msg))
 
-		Close()
-		Wait()
+		Wait(true)
 
 	} else {
 		fmt.Println(err)

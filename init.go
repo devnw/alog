@@ -144,6 +144,8 @@ func New(ctx context.Context, prefix string, dateformat string, location *time.L
 			location:     time.UTC,
 			dateformat:   time.RFC3339,
 			buffer:       buffer,
+			mutty:        sync.RWMutex{},
+			cleaned:      make(chan bool),
 		}
 
 		// initialize the go routines for reading the logs

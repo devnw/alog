@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/benjivesterby/validator"
-	"github.com/pkg/errors"
 )
 
 // TODO: Setup so that new destinations can be added at runtime (chan Dest)
@@ -28,7 +27,7 @@ type alog struct {
 	prefix     string
 	buffer     int
 
-	mutty sync.Mutex
+	mutty sync.RWMutex
 
 	// The channels which will have logs sent and received on
 	infodests   []chan<- log
@@ -41,12 +40,41 @@ type alog struct {
 
 	// Indicates that all logs have been cleared to the respective
 	// destinations during a close
-	closed chan bool
+	cleaned chan bool
+}
+
+func (l *alog) cleanup() {
+	select {
+	case <-l.ctx.Done():
+		// Lock the destinations
+		l.mutty.Lock()
+		defer l.mutty.Unlock()
+		defer close(l.cleaned)
+
+		// Cleanup the destinations
+		l.clean(INFO)
+		l.clean(DEBUG)
+		l.clean(WARN)
+		l.clean(ERROR)
+		l.clean(CRIT)
+		l.clean(FATAL)
+		l.clean(CUSTOM)
+	}
+}
+
+func (l *alog) clean(logtype int8) {
+	// Loop over the destinations for this logtype and close the channels
+	for _, destination := range l.getd(logtype) {
+		close(destination)
+	}
 }
 
 // init starts up the go routines for receiving and publishing logs
 // to the available io.Writers
 func (l *alog) init() (err error) {
+
+	// Startup the cleanup go routine to monitor for the closed context switch
+	go l.cleanup()
 
 	for _, dest := range l.destinations {
 		if dest.Types&INFO > 0 {
@@ -127,29 +155,31 @@ func (l *alog) listen(ctx context.Context, destination Destination) chan<- log {
 
 // send is used to create a go routine thread for fanning out specific
 // log types to each of the destinations
-func (l *alog) send(ctx context.Context, value log) (err error) {
+func (l *alog) send(ctx context.Context, value log) {
 	// TODO: Handle panic here
 
 	// Break out in the event that the context has been cancelled
 	select {
 	case <-ctx.Done():
-		err = errors.New("logger is closed")
 	default:
+
+		// Lock reads here while pulling channels
+		l.mutty.RLock()
+		dests := l.getd(value.logtype)
+		l.mutty.RUnlock()
+
 		// Loop over the destinations for this logtype and push onto the
 		// log channels for each destination
-		for _, destination := range l.getd(value.logtype) {
+		for _, destination := range dests {
 
 			// Push the log onto the destination channel
 			select {
 			case <-ctx.Done():
-				destination <- value
-				close(destination)
+				return
 			case destination <- value:
 			}
 		}
 	}
-
-	return err
 }
 
 func (l *alog) getd(logtype int8) []chan<- log {
@@ -205,7 +235,7 @@ func (l *alog) clog(ctx context.Context, v <-chan interface{}, logtype int8, cus
 					case error:
 						l.send(ctx, l.buildlog(logtype, custom, t, nil, nil))
 					default:
-						l.send(ctx, l.buildlog(logtype, custom, nil, nil, []interface{}{t}))
+						l.send(ctx, l.buildlog(logtype, custom, nil, nil, t))
 					}
 				} else {
 					return
@@ -222,26 +252,20 @@ func (l *alog) Printc(ctx context.Context, v <-chan interface{}) {
 }
 
 // Print creates informational logs based on the inputs
-func (l *alog) Print(v ...interface{}) error {
-	return l.send(l.ctx, l.buildlog(INFO, "", nil, nil, v...))
+func (l *alog) Print(v ...interface{}) {
+	go l.send(l.ctx, l.buildlog(INFO, "", nil, nil, v...))
 }
 
 // Println prints the data coming in as an informational log on individual lines
-func (l *alog) Println(v ...interface{}) (out error) {
+func (l *alog) Println(v ...interface{}) {
 	for _, value := range v {
-		if out = l.send(l.ctx, l.buildlog(INFO, "", nil, nil, value)); out != nil {
-
-			// Break the loop and return the error
-			break
-		}
+		go l.send(l.ctx, l.buildlog(INFO, "", nil, nil, value))
 	}
-
-	return out
 }
 
 // Printf creates an informational log using the format and values
-func (l *alog) Printf(format string, v ...interface{}) error {
-	return l.send(l.ctx, l.buildlog(INFO, "", nil, &format, v...))
+func (l *alog) Printf(format string, v ...interface{}) {
+	go l.send(l.ctx, l.buildlog(INFO, "", nil, &format, v...))
 }
 
 // Debugc creates debug logs based on the data coming from the
@@ -251,26 +275,20 @@ func (l *alog) Debugc(ctx context.Context, v <-chan interface{}) {
 }
 
 // Debug creates debugging logs based on the inputs
-func (l *alog) Debug(err error, v ...interface{}) error {
-	return l.send(l.ctx, l.buildlog(DEBUG, "", err, nil, v...))
+func (l *alog) Debug(err error, v ...interface{}) {
+	go l.send(l.ctx, l.buildlog(DEBUG, "", err, nil, v...))
 }
 
 // Debugln prints the data coming in as a debug log on individual lines
-func (l *alog) Debugln(err error, v ...interface{}) (out error) {
+func (l *alog) Debugln(err error, v ...interface{}) {
 	for _, value := range v {
-		if out = l.send(l.ctx, l.buildlog(DEBUG, "", err, nil, value)); out != nil {
-
-			// Break the loop and return the error
-			break
-		}
+		go l.send(l.ctx, l.buildlog(DEBUG, "", err, nil, value))
 	}
-
-	return out
 }
 
 // Debugf creates an debugging log using the format and values
-func (l *alog) Debugf(err error, format string, v ...interface{}) error {
-	return l.send(l.ctx, l.buildlog(DEBUG, "", err, &format, v...))
+func (l *alog) Debugf(err error, format string, v ...interface{}) {
+	go l.send(l.ctx, l.buildlog(DEBUG, "", err, &format, v...))
 }
 
 // Warnc creates warning logs based on the data coming from the
@@ -281,28 +299,22 @@ func (l *alog) Warnc(ctx context.Context, v <-chan interface{}) {
 
 // Warn creates a warning log using the error passed in along with the
 // values passed in
-func (l *alog) Warn(err error, v ...interface{}) error {
-	return l.send(l.ctx, l.buildlog(WARN, "", err, nil, v...))
+func (l *alog) Warn(err error, v ...interface{}) {
+	go l.send(l.ctx, l.buildlog(WARN, "", err, nil, v...))
 }
 
 // Warnln creates a warning log using the error and values passed in.
 // Each error and value is printed on a different line
-func (l *alog) Warnln(err error, v ...interface{}) (out error) {
+func (l *alog) Warnln(err error, v ...interface{}) {
 	for _, value := range v {
-		if out = l.send(l.ctx, l.buildlog(WARN, "", err, nil, value)); out != nil {
-
-			// Break the loop and return the error
-			break
-		}
+		go l.send(l.ctx, l.buildlog(WARN, "", err, nil, value))
 	}
-
-	return out
 }
 
 // Warnf creates a warning log using the error passed in, along with the string
 // formatting and values
-func (l *alog) Warnf(err error, format string, v ...interface{}) error {
-	return l.send(l.ctx, l.buildlog(WARN, "", err, &format, v...))
+func (l *alog) Warnf(err error, format string, v ...interface{}) {
+	go l.send(l.ctx, l.buildlog(WARN, "", err, &format, v...))
 }
 
 // Errorc creates error logs based on the data coming from the
@@ -312,28 +324,22 @@ func (l *alog) Errorc(ctx context.Context, v <-chan interface{}) {
 }
 
 // Error creates an error log using the error and other values passed in
-func (l *alog) Error(err error, v ...interface{}) error {
-	return l.send(l.ctx, l.buildlog(ERROR, "", err, nil, v...))
+func (l *alog) Error(err error, v ...interface{}) {
+	go l.send(l.ctx, l.buildlog(ERROR, "", err, nil, v...))
 }
 
 // Errorln creates error logs using the error and other values passed in.
 // Each error and value is printed on a different line
-func (l *alog) Errorln(err error, v ...interface{}) (out error) {
+func (l *alog) Errorln(err error, v ...interface{}) {
 	for _, value := range v {
-		if out = l.send(l.ctx, l.buildlog(ERROR, "", err, nil, value)); out != nil {
-
-			// Break the loop and return the error
-			break
-		}
+		go l.send(l.ctx, l.buildlog(ERROR, "", err, nil, value))
 	}
-
-	return out
 }
 
 // Errorf creates an error log using the error passed in, along with the string
 // formatting and values
-func (l *alog) Errorf(err error, format string, v ...interface{}) error {
-	return l.send(l.ctx, l.buildlog(ERROR, "", err, &format, v...))
+func (l *alog) Errorf(err error, format string, v ...interface{}) {
+	go l.send(l.ctx, l.buildlog(ERROR, "", err, &format, v...))
 }
 
 // Critc creates critical logs based on the data coming from the
@@ -343,28 +349,22 @@ func (l *alog) Critc(ctx context.Context, v <-chan interface{}) {
 }
 
 // Crit creates critical logs using the error and other values passed in
-func (l *alog) Crit(err error, v ...interface{}) error {
-	return l.send(l.ctx, l.buildlog(CRIT, "", err, nil, v...))
+func (l *alog) Crit(err error, v ...interface{}) {
+	go l.send(l.ctx, l.buildlog(CRIT, "", err, nil, v...))
 }
 
 // Critln creates critical logs using the error and other values passed in.
 // Each error and value is printed on a different line
-func (l *alog) Critln(err error, v ...interface{}) (out error) {
+func (l *alog) Critln(err error, v ...interface{}) {
 	for _, value := range v {
-		if out = l.send(l.ctx, l.buildlog(CRIT, "", err, nil, value)); out != nil {
-
-			// Break the loop and return the error
-			break
-		}
+		go l.send(l.ctx, l.buildlog(CRIT, "", err, nil, value))
 	}
-
-	return out
 }
 
 // Critf creates a critical log using the error passed in, along with the string
 // formatting and values
-func (l *alog) Critf(err error, format string, v ...interface{}) error {
-	return l.send(l.ctx, l.buildlog(CRIT, "", err, &format, v...))
+func (l *alog) Critf(err error, format string, v ...interface{}) {
+	go l.send(l.ctx, l.buildlog(CRIT, "", err, &format, v...))
 }
 
 // Fatalc creates fatal logs based on the data coming from the
@@ -374,29 +374,22 @@ func (l *alog) Fatalc(ctx context.Context, v <-chan interface{}) {
 }
 
 // Fatal creates a fatal log using the error and values passed into the method
-func (l *alog) Fatal(err error, v ...interface{}) error {
-	return l.send(l.ctx, l.buildlog(FATAL, "", err, nil, v...))
+func (l *alog) Fatal(err error, v ...interface{}) {
+	go l.send(l.ctx, l.buildlog(FATAL, "", err, nil, v...))
 }
 
 // Fatalln creates fatal logs using the error and other values passed in.
 // Each error and value is printed on a different line
-func (l *alog) Fatalln(err error, v ...interface{}) error {
-	var out error
+func (l *alog) Fatalln(err error, v ...interface{}) {
 	for _, value := range v {
-		if out = l.send(l.ctx, l.buildlog(FATAL, "", err, nil, value)); out != nil {
-
-			// Break the loop and return the error
-			break
-		}
+		go l.send(l.ctx, l.buildlog(FATAL, "", err, nil, value))
 	}
-
-	return out
 }
 
 // Fatalf creates an error log using the error passed in, along with the string
 // formatting and values
-func (l *alog) Fatalf(err error, format string, v ...interface{}) error {
-	return l.send(l.ctx, l.buildlog(FATAL, "", err, &format, v...))
+func (l *alog) Fatalf(err error, format string, v ...interface{}) {
+	go l.send(l.ctx, l.buildlog(FATAL, "", err, &format, v...))
 }
 
 // Customc creates custom logs based on the data coming from the
@@ -406,28 +399,22 @@ func (l *alog) Customc(ctx context.Context, v <-chan interface{}, ltype string) 
 }
 
 // Custom creates a custom log using the error and values passed into the method
-func (l *alog) Custom(ltype string, err error, v ...interface{}) error {
-	return l.send(l.ctx, l.buildlog(CUSTOM, ltype, err, nil, v...))
+func (l *alog) Custom(ltype string, err error, v ...interface{}) {
+	go l.send(l.ctx, l.buildlog(CUSTOM, ltype, err, nil, v...))
 }
 
 // Customln creates custom logs using the error and other values passed in.
 // Each error and value is printed on a different line
-func (l *alog) Customln(ltype string, err error, v ...interface{}) (out error) {
+func (l *alog) Customln(ltype string, err error, v ...interface{}) {
 	for _, value := range v {
-		if out = l.send(l.ctx, l.buildlog(CUSTOM, ltype, err, nil, value)); out != nil {
-
-			// Break the loop and return the error
-			break
-		}
+		go l.send(l.ctx, l.buildlog(CUSTOM, ltype, err, nil, value))
 	}
-
-	return out
 }
 
 // Customf creates a custom log using the error passed in, along with the string
 // formatting and values
-func (l *alog) Customf(ltype string, err error, format string, v ...interface{}) error {
-	return l.send(l.ctx, l.buildlog(CUSTOM, ltype, err, &format, v...))
+func (l *alog) Customf(ltype string, err error, format string, v ...interface{}) {
+	go l.send(l.ctx, l.buildlog(CUSTOM, ltype, err, &format, v...))
 }
 
 // AddOutput adds an additional logging source to the logger which
@@ -459,12 +446,15 @@ func (l *alog) Validate() (valid bool) {
 	return valid
 }
 
-// Wait blocks on the logger context until the context is closed
-func (l *alog) Wait() {
+// Wait blocks on the logger context until the context is closed, if the close flag
+// is passed then the wait function will close the context of the logger
+func (l *alog) Wait(close bool) {
 
-	// Cancel the internal context
-	l.cancel()
+	// Cancel the context if indicated in the call
+	if close {
+		l.Close()
+	}
 
-	// TODO: Wait for all of the channels to be closed out
-	<-l.ctx.Done()
+	// Wait for all of the channels to be closed out
+	<-l.cleaned
 }
