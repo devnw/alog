@@ -166,7 +166,7 @@ func (l *alog) send(ctx context.Context, value log) {
 		// Lock reads here while pulling channels
 		l.mutty.RLock()
 		dests := l.getd(value.logtype)
-		l.mutty.RUnlock()
+		defer l.mutty.RUnlock()
 
 		// Loop over the destinations for this logtype and push onto the
 		// log channels for each destination

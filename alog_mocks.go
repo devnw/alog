@@ -9,10 +9,7 @@ type passmock struct {
 func (pm *passmock) Write(p []byte) (n int, err error) {
 
 	n = len(p)
-	fmt.Println("IN")
 	pm.msg <- p
-
-	fmt.Println("OUT")
 
 	return n, err
 }
