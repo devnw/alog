@@ -99,7 +99,7 @@ func init() {
 // setGlobal overrides the default logger using the passed in logger for the library
 // to facilitate simplified global logging
 func setGlobal(logger Logger) (err error) {
-	if validator.IsValid(logger) {
+	if validator.Valid(logger) {
 		mutty.Lock()
 		defer mutty.Unlock()
 

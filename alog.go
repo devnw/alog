@@ -123,7 +123,7 @@ func (l *alog) listen(ctx context.Context, destination Destination) chan<- log {
 				return
 			case l, ok := <-logs:
 				if ok {
-					if validator.IsValid(l) {
+					if validator.Valid(l) {
 						var message string
 
 						switch destination.Format {
@@ -452,7 +452,7 @@ func (l *alog) AddOutput(out io.Writer) {
 // any logging activity. This should always be called in a defer at the top
 // level where the logger is initialized to ensure proper closure
 func (l *alog) Close() {
-	if validator.IsValid(l) {
+	if validator.Valid(l) {
 
 		// cancel the context of the logger
 		l.cancel()
