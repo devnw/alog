@@ -161,7 +161,7 @@ func New(ctx context.Context, prefix string, dateformat string, location *time.L
 			cancel:       cancel,
 			destinations: destinations,
 			prefix:       prefix,
-			location:     time.UTC,
+			location:     location,
 			dateformat:   time.RFC3339,
 			buffer:       buffer,
 			mutty:        sync.RWMutex{},

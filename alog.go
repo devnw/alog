@@ -44,22 +44,21 @@ type alog struct {
 }
 
 func (l *alog) cleanup() {
-	select {
-	case <-l.ctx.Done():
-		// Lock the destinations
-		l.mutty.Lock()
-		defer l.mutty.Unlock()
-		defer close(l.cleaned)
+	<-l.ctx.Done()
 
-		// Cleanup the destinations
-		l.clean(INFO)
-		l.clean(DEBUG)
-		l.clean(WARN)
-		l.clean(ERROR)
-		l.clean(CRIT)
-		l.clean(FATAL)
-		l.clean(CUSTOM)
-	}
+	// Lock the destinations
+	l.mutty.Lock()
+	defer l.mutty.Unlock()
+	defer close(l.cleaned)
+
+	// Cleanup the destinations
+	l.clean(INFO)
+	l.clean(DEBUG)
+	l.clean(WARN)
+	l.clean(ERROR)
+	l.clean(CRIT)
+	l.clean(FATAL)
+	l.clean(CUSTOM)
 }
 
 func (l *alog) clean(logtype LogLevel) {
@@ -134,14 +133,17 @@ func (l *alog) listen(ctx context.Context, destination Destination) chan<- log {
 								message = string(msg)
 							} else {
 								// TODO: panic?
+								panic("error marshalling JSON")
 							}
 						default:
 							message = l.String()
 						}
 
-						fmt.Fprint(destination.Writer, string(message))
+						if _, err := fmt.Fprint(destination.Writer, string(message)); err != nil {
+							panic("error writing to destination")
+						}
 					} else {
-						// TODO:
+						panic("invalid log at destination")
 					}
 				} else {
 					return
