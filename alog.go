@@ -62,7 +62,7 @@ func (l *alog) cleanup() {
 	}
 }
 
-func (l *alog) clean(logtype int8) {
+func (l *alog) clean(logtype LogLevel) {
 	// Loop over the destinations for this logtype and close the channels
 	for _, destination := range l.getd(logtype) {
 		close(destination)
@@ -182,27 +182,27 @@ func (l *alog) send(ctx context.Context, value log) {
 	}
 }
 
-func (l *alog) getd(logtype int8) []chan<- log {
+func (l *alog) getd(level LogLevel) []chan<- log {
 	destinations := l.infodests
 
-	if logtype&DEBUG > 0 {
+	if level&DEBUG > 0 {
 		destinations = l.debugdests
-	} else if logtype&WARN > 0 {
+	} else if level&WARN > 0 {
 		destinations = l.warndests
-	} else if logtype&ERROR > 0 {
+	} else if level&ERROR > 0 {
 		destinations = l.errdests
-	} else if logtype&CRIT > 0 {
+	} else if level&CRIT > 0 {
 		destinations = l.critdests
-	} else if logtype&FATAL > 0 {
+	} else if level&FATAL > 0 {
 		destinations = l.fataldests
-	} else if logtype&CUSTOM > 0 {
+	} else if level&CUSTOM > 0 {
 		destinations = l.customdests
 	}
 
 	return destinations
 }
 
-func (l *alog) buildlog(logtype int8, custom string, err error, format *string, v ...interface{}) (newlog log) {
+func (l *alog) buildlog(logtype LogLevel, custom string, err error, format *string, v ...interface{}) (newlog log) {
 
 	values := v
 	if format != nil {
@@ -221,9 +221,9 @@ func (l *alog) buildlog(logtype int8, custom string, err error, format *string, 
 	return newlog
 }
 
-func (l *alog) clog(ctx context.Context, v <-chan interface{}, logtype int8, custom string) {
+func (l *alog) clog(ctx context.Context, v <-chan interface{}, level LogLevel, custom string) {
 
-	go func(ctx context.Context, v <-chan interface{}, logtype int8, custom string) {
+	go func(ctx context.Context, v <-chan interface{}, level LogLevel, custom string) {
 		// TODO: handle panic
 		for {
 			select {
@@ -233,16 +233,16 @@ func (l *alog) clog(ctx context.Context, v <-chan interface{}, logtype int8, cus
 				if ok {
 					switch t := value.(type) {
 					case error:
-						l.send(ctx, l.buildlog(logtype, custom, t, nil, nil))
+						l.send(ctx, l.buildlog(level, custom, t, nil, nil))
 					default:
-						l.send(ctx, l.buildlog(logtype, custom, nil, nil, t))
+						l.send(ctx, l.buildlog(level, custom, nil, nil, t))
 					}
 				} else {
 					return
 				}
 			}
 		}
-	}(ctx, v, logtype, custom)
+	}(ctx, v, level, custom)
 }
 
 // Printc creates informational logs based on the data coming from the
@@ -289,6 +289,29 @@ func (l *alog) Debugln(err error, v ...interface{}) {
 // Debugf creates an debugging log using the format and values
 func (l *alog) Debugf(err error, format string, v ...interface{}) {
 	go l.send(l.ctx, l.buildlog(DEBUG, "", err, &format, v...))
+}
+
+// Tracec creates trace logs based on the data coming from the
+// concurrency channel that is passed in for processing
+func (l *alog) Tracec(ctx context.Context, v <-chan interface{}) {
+	l.clog(ctx, v, TRACE, "")
+}
+
+// Trace creates trace logs based on the inputs
+func (l *alog) Trace(err error, v ...interface{}) {
+	go l.send(l.ctx, l.buildlog(TRACE, "", err, nil, v...))
+}
+
+// Traceln prints the data coming in as a trace log on individual lines
+func (l *alog) Traceln(err error, v ...interface{}) {
+	for _, value := range v {
+		go l.send(l.ctx, l.buildlog(TRACE, "", err, nil, value))
+	}
+}
+
+// Tracef creates an trace log using the format and values
+func (l *alog) Tracef(err error, format string, v ...interface{}) {
+	go l.send(l.ctx, l.buildlog(TRACE, "", err, &format, v...))
 }
 
 // Warnc creates warning logs based on the data coming from the

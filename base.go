@@ -44,6 +44,27 @@ func Debugf(err error, format string, v ...interface{}) {
 	instance.Debugf(err, format, v...)
 }
 
+// Tracec creates trace logs based on the data coming from the
+// concurrency channel that is passed in for processing
+func Tracec(ctx context.Context, v <-chan interface{}) {
+	instance.Tracec(ctx, v)
+}
+
+// Trace creates trace logs based on the inputs
+func Trace(err error, v ...interface{}) {
+	instance.Trace(err, v...)
+}
+
+// Traceln prints the data coming in as a trace log on individual lines
+func Traceln(err error, v ...interface{}) {
+	instance.Traceln(err, v...)
+}
+
+// Tracef creates an trace log using the format and values
+func Tracef(err error, format string, v ...interface{}) {
+	instance.Tracef(err, format, v...)
+}
+
 // Warnc creates warning logs based on the data coming from the
 // concurrency channel that is passed in for processing
 func Warnc(ctx context.Context, v <-chan interface{}) {

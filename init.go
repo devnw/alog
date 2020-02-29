@@ -9,24 +9,33 @@ import (
 	"github.com/pkg/errors"
 )
 
+// LogFmt is the logging format
+type LogFmt int8
+
 const (
 	// STD uses a standard logging scheme without adding delimits
-	STD = 0
+	STD LogFmt = 1 << iota
 
 	// DELIM uses a delimited logging scheme using a delimiter format. DEFAULT: csv
-	DELIM = 1
+	DELIM
 
 	// JSON marshals composite structs to json for logging
-	JSON = 2
+	JSON
 )
+
+// LogLevel is the logging level for the logger
+type LogLevel int16
 
 // Log switches for sources setup using bitwise comparison
 const (
 	// INFO is the flag for logging informational logs on a destination
-	INFO = 1 << iota
+	INFO LogLevel = 1 << iota
 
 	// DEBUG is the flag for logging debugging logs on a destination
 	DEBUG
+
+	// TRACE is the flag for logging trace logs on a destination
+	TRACE
 
 	// WARN is the flag for logging warning logs on a destination
 	WARN
@@ -44,6 +53,17 @@ const (
 	// instead of one of the built in types
 	CUSTOM
 )
+
+var types = map[LogLevel]string{
+	INFO:   "INFO",
+	DEBUG:  "DEBUG",
+	TRACE:  "TRACE",
+	WARN:   "WARN",
+	ERROR:  "ERROR",
+	CRIT:   "CRITICAL",
+	FATAL:  "FATAL",
+	CUSTOM: "CUSTOM",
+}
 
 const (
 	// DEFAULTBUFFER is the global default for buffer size on the async logger

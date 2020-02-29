@@ -34,6 +34,19 @@ type Logger interface {
 	// Debugf creates an debugging log using the format and values
 	Debugf(err error, format string, v ...interface{})
 
+	// Tracec creates trace logs based on the data coming from the
+	// concurrency channel that is passed in for processing
+	Tracec(ctx context.Context, v <-chan interface{})
+
+	// Trace creates trace logs based on the inputs
+	Trace(err error, v ...interface{})
+
+	// Traceln prints the data coming in as a trace log on individual lines
+	Traceln(err error, v ...interface{})
+
+	// Tracef creates an trace log using the format and values
+	Tracef(err error, format string, v ...interface{})
+
 	// Warnc creates warning logs based on the data coming from the
 	// concurrency channel that is passed in for processing
 	Warnc(ctx context.Context, v <-chan interface{})

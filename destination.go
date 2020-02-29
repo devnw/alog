@@ -9,8 +9,8 @@ import (
 // alog library so that different log types can be passed to each writer
 // asynchronously
 type Destination struct {
-	Types  int8
-	Format int8
+	Types  LogLevel
+	Format LogFmt
 	Writer io.Writer
 }
 
