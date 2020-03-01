@@ -33,13 +33,13 @@ type alog struct {
 	mutty sync.RWMutex
 
 	// The channels which will have logs sent and received on
-	infodests   []chan<- *log
-	debugdests  []chan<- *log
-	warndests   []chan<- *log
-	errdests    []chan<- *log
-	critdests   []chan<- *log
-	fataldests  []chan<- *log
-	customdests []chan<- *log
+	infodests   []chan<- log
+	debugdests  []chan<- log
+	warndests   []chan<- log
+	errdests    []chan<- log
+	critdests   []chan<- log
+	fataldests  []chan<- log
+	customdests []chan<- log
 
 	// Indicates that all logs have been cleared to the respective
 	// destinations during a close
@@ -113,10 +113,10 @@ func (l *alog) init() (err error) {
 	return err
 }
 
-func (l *alog) listen(ctx context.Context, destination Destination) chan<- *log {
-	logs := make(chan *log)
+func (l *alog) listen(ctx context.Context, destination Destination) chan<- log {
+	logs := make(chan log)
 
-	go func(ctx context.Context, logs <-chan *log, destination Destination) {
+	go func(ctx context.Context, logs <-chan log, destination Destination) {
 		// TODO: handle panic
 
 		for {
@@ -162,7 +162,7 @@ func (l *alog) listen(ctx context.Context, destination Destination) chan<- *log 
 
 // send is used to create a go routine thread for fanning out specific
 // log types to each of the destinations
-func (l *alog) send(ctx context.Context, value *log) {
+func (l *alog) send(ctx context.Context, value log) {
 	// TODO: Handle panic here
 
 	// Break out in the event that the context has been cancelled
@@ -189,7 +189,7 @@ func (l *alog) send(ctx context.Context, value *log) {
 	}
 }
 
-func (l *alog) getd(level LogLevel) []chan<- *log {
+func (l *alog) getd(level LogLevel) []chan<- log {
 	destinations := l.infodests
 
 	if level&DEBUG > 0 {
@@ -209,14 +209,14 @@ func (l *alog) getd(level LogLevel) []chan<- *log {
 	return destinations
 }
 
-func (l *alog) buildlog(logtype LogLevel, custom string, err error, format *string, v ...interface{}) (newlog *log) {
+func (l *alog) buildlog(logtype LogLevel, custom string, err error, format *string, v ...interface{}) (newlog log) {
 
 	values := v
 	if format != nil {
 		values = []interface{}{fmt.Sprintf(*format, v...)}
 	}
 
-	newlog = &log{
+	newlog = log{
 		logger:     l,
 		logtype:    logtype,
 		customtype: custom,
