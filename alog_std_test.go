@@ -15,7 +15,7 @@ func Test_alog_global_defaults(t *testing.T) {
 	}
 
 	if err := Global(
-		nil,
+		context.Background(),
 		"PREFIX",
 		"",
 		nil,
