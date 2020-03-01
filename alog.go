@@ -133,7 +133,9 @@ func (l *alog) listen(ctx context.Context, destination Destination) chan<- *log 
 						case DELIM:
 						case JSON:
 							if msg, err := json.Marshal(l); err == nil {
-								message = string(msg)
+
+								// Add a newline to each json log for readability
+								message = string(msg) + "\n"
 							} else {
 								// TODO: panic?
 								panic("error marshalling JSON")
