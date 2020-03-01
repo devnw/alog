@@ -265,9 +265,13 @@ func (l *alog) Print(v ...interface{}) {
 // Println prints the data coming in as an informational log on individual lines
 func (l *alog) Println(v ...interface{}) {
 	go func(v ...interface{}) {
+		if len(v) > 0 {
 
-		for _, value := range v {
-			l.send(l.ctx, l.buildlog(INFO, "", nil, nil, value))
+			for _, value := range v {
+				l.send(l.ctx, l.buildlog(INFO, "", nil, nil, value))
+			}
+		} else {
+			l.send(l.ctx, l.buildlog(WARN, "", nil, nil, "empty log value passed"))
 		}
 	}(v...)
 }
@@ -291,9 +295,13 @@ func (l *alog) Debug(err error, v ...interface{}) {
 // Debugln prints the data coming in as a debug log on individual lines
 func (l *alog) Debugln(err error, v ...interface{}) {
 	go func(v ...interface{}) {
+		if len(v) > 0 {
 
-		for _, value := range v {
-			l.send(l.ctx, l.buildlog(DEBUG, "", err, nil, value))
+			for _, value := range v {
+				l.send(l.ctx, l.buildlog(DEBUG, "", err, nil, value))
+			}
+		} else {
+			l.send(l.ctx, l.buildlog(WARN, "", nil, nil, "empty log value passed"))
 		}
 	}(v...)
 }
@@ -317,9 +325,13 @@ func (l *alog) Trace(err error, v ...interface{}) {
 // Traceln prints the data coming in as a trace log on individual lines
 func (l *alog) Traceln(err error, v ...interface{}) {
 	go func(v ...interface{}) {
+		if len(v) > 0 {
 
-		for _, value := range v {
-			l.send(l.ctx, l.buildlog(TRACE, "", err, nil, value))
+			for _, value := range v {
+				l.send(l.ctx, l.buildlog(TRACE, "", err, nil, value))
+			}
+		} else {
+			l.send(l.ctx, l.buildlog(WARN, "", nil, nil, "empty log value passed"))
 		}
 	}(v...)
 }
@@ -345,9 +357,13 @@ func (l *alog) Warn(err error, v ...interface{}) {
 // Each error and value is printed on a different line
 func (l *alog) Warnln(err error, v ...interface{}) {
 	go func(v ...interface{}) {
+		if len(v) > 0 {
 
-		for _, value := range v {
-			l.send(l.ctx, l.buildlog(WARN, "", err, nil, value))
+			for _, value := range v {
+				l.send(l.ctx, l.buildlog(WARN, "", err, nil, value))
+			}
+		} else {
+			l.send(l.ctx, l.buildlog(WARN, "", nil, nil, "empty log value passed"))
 		}
 	}(v...)
 }
@@ -373,9 +389,13 @@ func (l *alog) Error(err error, v ...interface{}) {
 // Each error and value is printed on a different line
 func (l *alog) Errorln(err error, v ...interface{}) {
 	go func(v ...interface{}) {
+		if len(v) > 0 {
 
-		for _, value := range v {
-			l.send(l.ctx, l.buildlog(ERROR, "", err, nil, value))
+			for _, value := range v {
+				l.send(l.ctx, l.buildlog(ERROR, "", err, nil, value))
+			}
+		} else {
+			l.send(l.ctx, l.buildlog(WARN, "", nil, nil, "empty log value passed"))
 		}
 	}(v...)
 }
@@ -401,9 +421,13 @@ func (l *alog) Crit(err error, v ...interface{}) {
 // Each error and value is printed on a different line
 func (l *alog) Critln(err error, v ...interface{}) {
 	go func(v ...interface{}) {
+		if len(v) > 0 {
 
-		for _, value := range v {
-			l.send(l.ctx, l.buildlog(CRIT, "", err, nil, value))
+			for _, value := range v {
+				l.send(l.ctx, l.buildlog(CRIT, "", err, nil, value))
+			}
+		} else {
+			l.send(l.ctx, l.buildlog(WARN, "", nil, nil, "empty log value passed"))
 		}
 	}(v...)
 }
@@ -429,9 +453,13 @@ func (l *alog) Fatal(err error, v ...interface{}) {
 // Each error and value is printed on a different line
 func (l *alog) Fatalln(err error, v ...interface{}) {
 	go func(v ...interface{}) {
+		if len(v) > 0 {
 
-		for _, value := range v {
-			l.send(l.ctx, l.buildlog(FATAL, "", err, nil, value))
+			for _, value := range v {
+				l.send(l.ctx, l.buildlog(FATAL, "", err, nil, value))
+			}
+		} else {
+			l.send(l.ctx, l.buildlog(WARN, "", nil, nil, "empty log value passed"))
 		}
 	}(v...)
 }
@@ -457,9 +485,13 @@ func (l *alog) Custom(ltype string, err error, v ...interface{}) {
 // Each error and value is printed on a different line
 func (l *alog) Customln(ltype string, err error, v ...interface{}) {
 	go func(v ...interface{}) {
+		if len(v) > 0 {
 
-		for _, value := range v {
-			l.send(l.ctx, l.buildlog(CUSTOM, ltype, err, nil, value))
+			for _, value := range v {
+				l.send(l.ctx, l.buildlog(CUSTOM, ltype, err, nil, value))
+			}
+		} else {
+			l.send(l.ctx, l.buildlog(WARN, "", nil, nil, "empty log value passed"))
 		}
 	}(v...)
 }
