@@ -122,6 +122,14 @@ type fakelog struct {
 	expected string
 }
 
+type abnorm struct {
+	value string
+}
+
+type iny struct {
+	value interface{}
+}
+
 var logs = []fakelog{
 	{
 		INFO,

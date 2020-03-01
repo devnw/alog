@@ -2,6 +2,7 @@ package alog
 
 import (
 	"context"
+	"fmt"
 	"testing"
 )
 
@@ -72,6 +73,155 @@ func Test_alog_ln(t *testing.T) {
 	}
 
 	Wait(true)
+}
+
+func Test_alog_stringer(t *testing.T) {
+	mock := &passmock{make(chan []byte)}
+
+	if err := testg(nil, mock); err != nil {
+		t.Error(err)
+		return
+	}
+
+	lg := newjsonlog(
+		"",
+		"INFO",
+		"INFO",
+		"INFO",
+	)
+
+	Println(lg)
+
+	if log, ok := <-mock.msg; ok {
+		if err := check(log, fmt.Sprintf("[INFO] %s", lg.String())); err != nil {
+			t.Error(err)
+		}
+	} else {
+		return
+	}
+
+	Close()
+}
+
+func Test_alog_interface(t *testing.T) {
+	mock := &passmock{make(chan []byte)}
+
+	if err := testg(nil, mock); err != nil {
+		t.Error(err)
+		return
+	}
+
+	lg := abnorm{"INFO"}
+
+	Println(lg)
+
+	if log, ok := <-mock.msg; ok {
+		if err := check(log, fmt.Sprintf("[INFO] {INFO}")); err != nil {
+			t.Error(err)
+		}
+	} else {
+		return
+	}
+
+	Close()
+}
+
+func Test_alog_nested(t *testing.T) {
+	mock := &passmock{make(chan []byte)}
+
+	if err := testg(nil, mock); err != nil {
+		t.Error(err)
+		return
+	}
+
+	lg := iny{iny{iny{}}}
+
+	Println(lg)
+
+	if log, ok := <-mock.msg; ok {
+		if err := check(log, "[INFO] {{{<nil>}}}"); err != nil {
+			t.Error(err)
+		}
+	} else {
+		return
+	}
+
+	Close()
+}
+
+func Test_alog_sliced_struct(t *testing.T) {
+	mock := &passmock{make(chan []byte)}
+
+	if err := testg(nil, mock); err != nil {
+		t.Error(err)
+		return
+	}
+
+	lg := []iny{
+		{abnorm{"INFO"}},
+		{abnorm{"INFO"}},
+		{abnorm{"INFO"}},
+		{abnorm{"INFO"}},
+		{abnorm{"INFO"}},
+	}
+
+	Println(lg)
+
+	if log, ok := <-mock.msg; ok {
+		if err := check(log, "[INFO] [{{INFO}} {{INFO}} {{INFO}} {{INFO}} {{INFO}}]"); err != nil {
+			t.Error(err)
+		}
+	} else {
+		return
+	}
+
+	Close()
+}
+
+func Test_alog_sliced_interface(t *testing.T) {
+	mock := &passmock{make(chan []byte)}
+
+	if err := testg(nil, mock); err != nil {
+		t.Error(err)
+		return
+	}
+
+	lg := []interface{}{[]interface{}{[]interface{}{"HELLOWORLD"}}}
+
+	Println(lg)
+
+	if log, ok := <-mock.msg; ok {
+		if err := check(log, "[INFO] HELLOWORLD"); err != nil {
+			t.Error(err)
+		}
+	} else {
+		return
+	}
+
+	Close()
+}
+
+func Test_alog_sliced_string(t *testing.T) {
+	mock := &passmock{make(chan []byte)}
+
+	if err := testg(nil, mock); err != nil {
+		t.Error(err)
+		return
+	}
+
+	lg := []string{"HELLO", "WORLD"}
+
+	Println(lg)
+
+	if log, ok := <-mock.msg; ok {
+		if err := check(log, "[INFO] HELLO,WORLD"); err != nil {
+			t.Error(err)
+		}
+	} else {
+		return
+	}
+
+	Close()
 }
 
 func Test_alog_ln_multi(t *testing.T) {

@@ -13,7 +13,7 @@ type log struct {
 	customtype string
 	timestamp  time.Time
 	err        error
-	values     interface{}
+	values     []interface{}
 }
 
 func (l log) String() (output string) {
@@ -57,20 +57,11 @@ func (l log) String() (output string) {
 // getmessages breaks down the interface values and makes them
 // into string messages that can then be represented in the different
 // logging systems
-func (l log) getmessages(v interface{}) (messages []string) {
+func (l log) getmessages(v []interface{}) (messages []string) {
 	messages = make([]string, 0)
 
-	switch x := l.values.(type) {
-	case string:
-		messages = append(messages, x)
-	case []string:
-		messages = append(messages, x...)
-	case []interface{}:
-		for _, val := range l.intslice(x) {
-			messages = append(messages, l.getmessage(val))
-		}
-	default:
-		messages = append(messages, l.getmessage(x))
+	for _, val := range l.intslice(v) {
+		messages = append(messages, l.getmessage(val))
 	}
 
 	return messages
@@ -83,11 +74,18 @@ func (l log) intslice(v []interface{}) (flattened []interface{}) {
 
 	flattened = make([]interface{}, 0)
 	for _, value := range v {
-		switch nv := value.(type) {
+
+		switch x := value.(type) {
+		case string:
+			flattened = append(flattened, x)
+		case []string:
+			for _, s := range x {
+				flattened = append(flattened, s)
+			}
 		case []interface{}:
-			flattened = append(flattened, l.intslice(nv)...)
+			flattened = append(flattened, l.intslice(x)...)
 		default:
-			flattened = append(flattened, nv)
+			flattened = append(flattened, l.getmessage(x))
 		}
 	}
 
