@@ -3,126 +3,16 @@ package alog
 import (
 	"context"
 	"fmt"
-	"math/rand"
+	"strings"
 	"testing"
 	"time"
-
-	"github.com/Pallinder/go-randomdata"
-	"github.com/pkg/errors"
 )
 
-type fakelog struct {
-	tp   LogLevel
-	text string
-	err  error
-}
-
-func randtypes(ctx context.Context, count int) <-chan fakelog {
-	rand.Seed(time.Now().UnixNano())
-	rands := make(chan fakelog)
-
-	go func(rands chan<- fakelog) {
-		defer close(rands)
-
-		i := 0
-		for i < count {
-			v := LogLevel(rand.Intn(int(CUSTOM)-int(INFO)+1) + int(INFO))
-
-			if v <= CUSTOM {
-				var e error
-				if v&INFO == 0 {
-					e = errors.New(randomdata.SillyName())
-				}
-
-				fl := fakelog{
-					v,
-					randomdata.SillyName(),
-					e,
-				}
-
-				select {
-				case <-ctx.Done():
-					return
-				case rands <- fl:
-					i++
-				}
-			}
-		}
-	}(rands)
-
-	return rands
-}
-
-func Test_alog_2global(t *testing.T) {
-
-	mock := &writemock{}
-
-	dest := Destination{
-		INFO | DEBUG | TRACE | WARN | ERROR | CRIT | FATAL | CUSTOM,
-		STD,
-		mock,
-	}
-	ctx, cancel := context.WithCancel(context.Background())
-
-	if err := Global(
-		ctx,
-		"",
-		DEFAULTTIMEFORMAT,
-		time.UTC,
-		DEFAULTBUFFER,
-		dest,
-	); err == nil {
-		ls := randtypes(ctx, 10)
-
-		defer cancel()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case l, ok := <-ls:
-				if ok {
-					if l.tp&INFO > 0 {
-						Println(l.text)
-					} else if l.tp&DEBUG > 0 {
-
-						Debugln(l.err, l.text)
-					} else if l.tp&TRACE > 0 {
-
-						Traceln(l.err, l.text)
-					} else if l.tp&WARN > 0 {
-
-						Warnln(l.err, l.text)
-					} else if l.tp&ERROR > 0 {
-
-						Errorln(l.err, l.text)
-					} else if l.tp&CRIT > 0 {
-
-						Critln(l.err, l.text)
-					} else if l.tp&FATAL > 0 {
-
-						Fatalln(l.err, l.text)
-					} else if l.tp&CUSTOM > 0 {
-
-						Customln(randomdata.SillyName(), l.err, l.text)
-					}
-				} else {
-					return
-				}
-			}
-		}
-
-	} else {
-		cancel()
-		t.Error(err)
-	}
-}
-
-func Test_alog_global(t *testing.T) {
-
+func Test_alog_global_ln(t *testing.T) {
 	mock := &passmock{make(chan []byte)}
 
 	dest := Destination{
-		INFO | WARN | ERROR | CRIT | FATAL | CUSTOM,
+		INFO | DEBUG | TRACE | WARN | ERROR | CRIT | FATAL | CUSTOM,
 		STD,
 		mock,
 	}
@@ -135,22 +25,330 @@ func Test_alog_global(t *testing.T) {
 		DEFAULTBUFFER,
 		dest,
 	); err == nil {
+		for _, test := range logs {
+			if test.lvl&INFO > 0 {
+				Println(test.text)
+			} else if test.lvl&DEBUG > 0 {
 
-		Critln(errors.New("TEST CRIT"), "HELLO WORLD")
+				Debugln(test.err, test.text)
+			} else if test.lvl&TRACE > 0 {
 
-		fmt.Println(string(<-mock.msg))
+				Traceln(test.err, test.text)
+			} else if test.lvl&WARN > 0 {
 
-		Println("HELLO WORLD")
+				Warnln(test.err, test.text)
+			} else if test.lvl&ERROR > 0 {
 
-		fmt.Println(string(<-mock.msg))
+				Errorln(test.err, test.text)
+			} else if test.lvl&CRIT > 0 {
 
-		Debugln(errors.New("TEST DEBUG"), "HELLO WORLD")
+				Critln(test.err, test.text)
+			} else if test.lvl&FATAL > 0 {
 
-		// NO DEBUG DEST fmt.Println(string(<-mock.msg))
+				Fatalln(test.err, test.text)
+			} else if test.lvl&CUSTOM > 0 {
 
-		Critln(errors.New("TEST CRIT"), "HELLO WORLD")
+				Customln("CUSTOM", test.err, test.text)
+			}
 
-		fmt.Println(string(<-mock.msg))
+			if log, ok := <-mock.msg; ok {
+				output := string(log)
+
+				if strings.LastIndex(output, "\n") == len(output)-1 {
+					i := strings.Index(output, "[")
+					output = strings.TrimSpace(output[i:])
+
+					if test.expected != output {
+						t.Errorf("expected result: '%s' != output: '%s'", test.expected, output)
+					}
+
+				} else {
+					t.Errorf("expected newline at end of log")
+				}
+			} else {
+				return
+			}
+		}
+
+		Wait(true)
+
+	} else {
+		fmt.Println(err)
+	}
+}
+
+func Test_alog_global_ln_multi(t *testing.T) {
+	mock := &passmock{make(chan []byte)}
+
+	dest := Destination{
+		INFO | DEBUG | TRACE | WARN | ERROR | CRIT | FATAL | CUSTOM,
+		STD,
+		mock,
+	}
+
+	if err := Global(
+		context.Background(),
+		"",
+		DEFAULTTIMEFORMAT,
+		time.UTC,
+		DEFAULTBUFFER,
+		dest,
+	); err == nil {
+		for _, test := range logs {
+			if test.lvl&INFO > 0 {
+				Println(test.text, test.text)
+			} else if test.lvl&DEBUG > 0 {
+
+				Debugln(test.err, test.text, test.text)
+			} else if test.lvl&TRACE > 0 {
+
+				Traceln(test.err, test.text, test.text)
+			} else if test.lvl&WARN > 0 {
+
+				Warnln(test.err, test.text, test.text)
+			} else if test.lvl&ERROR > 0 {
+
+				Errorln(test.err, test.text, test.text)
+			} else if test.lvl&CRIT > 0 {
+
+				Critln(test.err, test.text, test.text)
+			} else if test.lvl&FATAL > 0 {
+
+				Fatalln(test.err, test.text, test.text)
+			} else if test.lvl&CUSTOM > 0 {
+
+				Customln("CUSTOM", test.err, test.text, test.text)
+			}
+
+			// Loop twice since there should be two lines for each of these
+			for i := 0; i < 2; i++ {
+
+				if log, ok := <-mock.msg; ok {
+					output := string(log)
+
+					if strings.LastIndex(output, "\n") == len(output)-1 {
+						i := strings.Index(output, "[")
+						output = strings.TrimSpace(output[i:])
+
+						if test.expected != output {
+							t.Errorf("expected result: '%s' != output: '%s'", test.expected, output)
+						}
+
+					} else {
+						t.Errorf("expected newline at end of log")
+					}
+				} else {
+					return
+				}
+			}
+		}
+
+		Wait(true)
+
+	} else {
+		fmt.Println(err)
+	}
+}
+
+func Test_alog_global_normal(t *testing.T) {
+	mock := &passmock{make(chan []byte)}
+
+	dest := Destination{
+		INFO | DEBUG | TRACE | WARN | ERROR | CRIT | FATAL | CUSTOM,
+		STD,
+		mock,
+	}
+
+	if err := Global(
+		context.Background(),
+		"",
+		DEFAULTTIMEFORMAT,
+		time.UTC,
+		DEFAULTBUFFER,
+		dest,
+	); err == nil {
+		for _, test := range logs {
+			if test.lvl&INFO > 0 {
+				Print(test.text)
+			} else if test.lvl&DEBUG > 0 {
+
+				Debug(test.err, test.text)
+			} else if test.lvl&TRACE > 0 {
+
+				Trace(test.err, test.text)
+			} else if test.lvl&WARN > 0 {
+
+				Warn(test.err, test.text)
+			} else if test.lvl&ERROR > 0 {
+
+				Error(test.err, test.text)
+			} else if test.lvl&CRIT > 0 {
+
+				Crit(test.err, test.text)
+			} else if test.lvl&FATAL > 0 {
+
+				Fatal(test.err, test.text)
+			} else if test.lvl&CUSTOM > 0 {
+
+				Custom("CUSTOM", test.err, test.text)
+			}
+
+			if log, ok := <-mock.msg; ok {
+				output := string(log)
+
+				if strings.LastIndex(output, "\n") == len(output)-1 {
+					i := strings.Index(output, "[")
+					output = strings.TrimSpace(output[i:])
+
+					if test.expected != output {
+						t.Errorf("expected result: '%s' != output: '%s'", test.expected, output)
+					}
+
+				} else {
+					t.Errorf("expected newline at end of log")
+				}
+			} else {
+				return
+			}
+		}
+
+		Wait(true)
+
+	} else {
+		fmt.Println(err)
+	}
+}
+
+func Test_alog_global_multi(t *testing.T) {
+	mock := &passmock{make(chan []byte)}
+
+	dest := Destination{
+		INFO | DEBUG | TRACE | WARN | ERROR | CRIT | FATAL | CUSTOM,
+		STD,
+		mock,
+	}
+
+	if err := Global(
+		context.Background(),
+		"",
+		DEFAULTTIMEFORMAT,
+		time.UTC,
+		DEFAULTBUFFER,
+		dest,
+	); err == nil {
+		for _, test := range multi {
+			if test.lvl&INFO > 0 {
+				Print(test.text, test.text)
+			} else if test.lvl&DEBUG > 0 {
+
+				Debug(test.err, test.text, test.text)
+			} else if test.lvl&TRACE > 0 {
+
+				Trace(test.err, test.text, test.text)
+			} else if test.lvl&WARN > 0 {
+
+				Warn(test.err, test.text, test.text)
+			} else if test.lvl&ERROR > 0 {
+
+				Error(test.err, test.text, test.text)
+			} else if test.lvl&CRIT > 0 {
+
+				Crit(test.err, test.text, test.text)
+			} else if test.lvl&FATAL > 0 {
+
+				Fatal(test.err, test.text, test.text)
+			} else if test.lvl&CUSTOM > 0 {
+
+				Custom("CUSTOM", test.err, test.text, test.text)
+			}
+
+			if log, ok := <-mock.msg; ok {
+				output := string(log)
+
+				if strings.LastIndex(output, "\n") == len(output)-1 {
+					i := strings.Index(output, "[")
+					output = strings.TrimSpace(output[i:])
+
+					if test.expected != output {
+						t.Errorf("expected result: '%s' != output: '%s'", test.expected, output)
+					}
+
+				} else {
+					t.Errorf("expected newline at end of log")
+				}
+			} else {
+				return
+			}
+		}
+
+		Wait(true)
+
+	} else {
+		fmt.Println(err)
+	}
+}
+
+func Test_alog_global_normalf(t *testing.T) {
+	mock := &passmock{make(chan []byte)}
+
+	dest := Destination{
+		INFO | DEBUG | TRACE | WARN | ERROR | CRIT | FATAL | CUSTOM,
+		STD,
+		mock,
+	}
+
+	if err := Global(
+		context.Background(),
+		"",
+		DEFAULTTIMEFORMAT,
+		time.UTC,
+		DEFAULTBUFFER,
+		dest,
+	); err == nil {
+		for _, test := range flogs {
+			if test.lvl&INFO > 0 {
+				Printf("%s *%s*", test.text, test.text)
+			} else if test.lvl&DEBUG > 0 {
+
+				Debugf(test.err, "%s *%s*", test.text, test.text)
+			} else if test.lvl&TRACE > 0 {
+
+				Tracef(test.err, "%s *%s*", test.text, test.text)
+			} else if test.lvl&WARN > 0 {
+
+				Warnf(test.err, "%s *%s*", test.text, test.text)
+			} else if test.lvl&ERROR > 0 {
+
+				Errorf(test.err, "%s *%s*", test.text, test.text)
+			} else if test.lvl&CRIT > 0 {
+
+				Critf(test.err, "%s *%s*", test.text, test.text)
+			} else if test.lvl&FATAL > 0 {
+
+				Fatalf(test.err, "%s *%s*", test.text, test.text)
+			} else if test.lvl&CUSTOM > 0 {
+
+				Customf("CUSTOM", test.err, "%s *%s*", test.text, test.text)
+			}
+
+			if log, ok := <-mock.msg; ok {
+				output := string(log)
+
+				if strings.LastIndex(output, "\n") == len(output)-1 {
+					i := strings.Index(output, "[")
+					output = strings.TrimSpace(output[i:])
+
+					if test.expected != output {
+						t.Errorf("expected result: '%s' != output: '%s'", test.expected, output)
+					}
+
+				} else {
+					t.Errorf("expected newline at end of log")
+				}
+			} else {
+				return
+			}
+		}
 
 		Wait(true)
 
