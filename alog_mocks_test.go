@@ -14,31 +14,24 @@ type passmock struct {
 	msg chan []byte
 }
 
-func check(ftype LogFmt, value []byte, expected string) (err error) {
+func check(value []byte, expected string) (err error) {
+	if len(value) > 0 {
 
-	switch ftype {
-	case STD:
-		if len(value) > 0 {
+		output := string(value)
 
-			output := string(value)
+		if strings.LastIndex(output, "\n") == len(output)-1 {
+			i := strings.Index(output, "[")
+			output = strings.TrimSpace(output[i:])
 
-			if strings.LastIndex(output, "\n") == len(output)-1 {
-				i := strings.Index(output, "[")
-				output = strings.TrimSpace(output[i:])
-
-				if expected != output {
-					err = errors.Errorf("expected result: '%s' != output: '%s'", expected, output)
-				}
-
-			} else {
-				err = errors.Errorf("expected newline at end of log")
+			if expected != output {
+				err = errors.Errorf("expected result: '%s' != output: '%s'", expected, output)
 			}
+
 		} else {
-			err = errors.Errorf("value is empty")
+			err = errors.Errorf("expected newline at end of log")
 		}
-	case DELIM:
-	default:
-		err = errors.New("Invalid format type for alog")
+	} else {
+		err = errors.Errorf("value is empty")
 	}
 
 	return err

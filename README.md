@@ -1,4 +1,4 @@
-# Asynchronous, non-IO blocking Logger for Go
+# Fully concurrent, non-IO blocking Logger for Go
 
 ![CI](https://github.com/benjivesterby/alog/workflows/CI/badge.svg)
 [![Go Report Card](https://goreportcard.com/badge/github.com/benjivesterby/alog)](https://goreportcard.com/report/github.com/benjivesterby/alog)
