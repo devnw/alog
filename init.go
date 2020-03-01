@@ -16,9 +16,6 @@ const (
 	// STD uses a standard logging scheme without adding delimits
 	STD LogFmt = 1 << iota
 
-	// DELIM uses a delimited logging scheme using a delimiter format. DEFAULT: csv
-	DELIM
-
 	// JSON marshals composite structs to json for logging
 	JSON
 )

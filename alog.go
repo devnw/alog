@@ -130,7 +130,6 @@ func (l *alog) listen(ctx context.Context, destination Destination) chan<- log {
 						var message string
 
 						switch destination.Format {
-						case DELIM:
 						case JSON:
 							if msg, err := json.Marshal(l); err == nil {
 
