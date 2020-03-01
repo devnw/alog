@@ -356,3 +356,171 @@ func Test_alog_global_normalf(t *testing.T) {
 		fmt.Println(err)
 	}
 }
+
+func Test_alog_global_chan(t *testing.T) {
+	mock := &passmock{make(chan []byte)}
+
+	dest := Destination{
+		INFO | DEBUG | TRACE | WARN | ERROR | CRIT | FATAL | CUSTOM,
+		STD,
+		mock,
+	}
+
+	if err := Global(
+		context.Background(),
+		"",
+		DEFAULTTIMEFORMAT,
+		time.UTC,
+		DEFAULTBUFFER,
+		dest,
+	); err == nil {
+		for _, test := range clogs {
+
+			func() {
+				ctx, cancel := context.WithCancel(context.Background())
+				defer cancel()
+
+				wchan := make(chan interface{})
+
+				if test.lvl&INFO > 0 {
+					Printc(ctx, wchan)
+
+				} else if test.lvl&DEBUG > 0 {
+
+					Debugc(ctx, wchan)
+				} else if test.lvl&TRACE > 0 {
+
+					Tracec(ctx, wchan)
+				} else if test.lvl&WARN > 0 {
+
+					Warnc(ctx, wchan)
+				} else if test.lvl&ERROR > 0 {
+
+					Errorc(ctx, wchan)
+				} else if test.lvl&CRIT > 0 {
+
+					Critc(ctx, wchan)
+				} else if test.lvl&FATAL > 0 {
+
+					Fatalc(ctx, wchan)
+				} else if test.lvl&CUSTOM > 0 {
+
+					Customc(ctx, wchan, "CUSTOM")
+				}
+
+				select {
+				case <-ctx.Done():
+					return
+				case wchan <- test.text:
+				}
+
+				if log, ok := <-mock.msg; ok {
+					output := string(log)
+
+					if strings.LastIndex(output, "\n") == len(output)-1 {
+						i := strings.Index(output, "[")
+						output = strings.TrimSpace(output[i:])
+
+						if test.expected != output {
+							t.Errorf("expected result: '%s' != output: '%s'", test.expected, output)
+						}
+
+					} else {
+						t.Errorf("expected newline at end of log")
+					}
+				} else {
+					return
+				}
+			}()
+		}
+
+		Wait(true)
+
+	} else {
+		fmt.Println(err)
+	}
+}
+
+func Test_alog_global_chan_err(t *testing.T) {
+	mock := &passmock{make(chan []byte)}
+
+	dest := Destination{
+		INFO | DEBUG | TRACE | WARN | ERROR | CRIT | FATAL | CUSTOM,
+		STD,
+		mock,
+	}
+
+	if err := Global(
+		context.Background(),
+		"",
+		DEFAULTTIMEFORMAT,
+		time.UTC,
+		DEFAULTBUFFER,
+		dest,
+	); err == nil {
+		for _, test := range cerrlogs {
+
+			// Skip info for this test
+			if test.lvl&INFO == 0 {
+				func() {
+					ctx, cancel := context.WithCancel(context.Background())
+					defer cancel()
+
+					wchan := make(chan interface{})
+
+					if test.lvl&DEBUG > 0 {
+
+						Debugc(ctx, wchan)
+					} else if test.lvl&TRACE > 0 {
+
+						Tracec(ctx, wchan)
+					} else if test.lvl&WARN > 0 {
+
+						Warnc(ctx, wchan)
+					} else if test.lvl&ERROR > 0 {
+
+						Errorc(ctx, wchan)
+					} else if test.lvl&CRIT > 0 {
+
+						Critc(ctx, wchan)
+					} else if test.lvl&FATAL > 0 {
+
+						Fatalc(ctx, wchan)
+					} else if test.lvl&CUSTOM > 0 {
+
+						Customc(ctx, wchan, "CUSTOM")
+					}
+
+					select {
+					case <-ctx.Done():
+						return
+					case wchan <- test.err:
+					}
+
+					if log, ok := <-mock.msg; ok {
+						output := string(log)
+
+						if strings.LastIndex(output, "\n") == len(output)-1 {
+							i := strings.Index(output, "[")
+							output = strings.TrimSpace(output[i:])
+
+							if test.expected != output {
+								t.Errorf("expected result: '%s' != output: '%s'", test.expected, output)
+							}
+
+						} else {
+							t.Errorf("expected newline at end of log")
+						}
+					} else {
+						return
+					}
+				}()
+			}
+		}
+
+		Wait(true)
+
+	} else {
+		fmt.Println(err)
+	}
+}
