@@ -9,7 +9,11 @@
 
 ## Usage
 
-To install `go get -u github.com/benjivesterby/alog`
+Installation:
+
+```go
+go get -u github.com/benjivesterby/alog
+```
 
 ## alog
 
@@ -72,3 +76,7 @@ alog.Fatalln(err, "fatal log")
 alog.Customln("CUSTOM", err, "debug log")
 
 ```
+
+For applications that want to ensure log completeness using `alog` execute
+`alog.Wait(bool)` when cleaning up your application so that the logger can correctly cleanup any lingering channels and Go routines. The boolean
+parameter let's the wait method know if you want to also close the logger internally.
