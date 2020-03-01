@@ -1,3 +1,4 @@
+// Package alog
 package alog
 
 import (
@@ -13,8 +14,8 @@ import (
 // TODO: Setup so that new destinations can be added at runtime (chan Dest)
 // TODO: flag for stack traces on logs with errors?
 
-// STREAMLOG is a constant for the log value of a streaming log when an error type is sent
-const STREAMLOG = "stream log"
+// streamlog is a constant for the log value of a streaming log when an error type is sent
+const streamlog = "stream log"
 
 type alog struct {
 	ctx          context.Context
@@ -236,7 +237,7 @@ func (l *alog) clog(ctx context.Context, v <-chan interface{}, level LogLevel, c
 				if ok {
 					switch t := value.(type) {
 					case error:
-						l.send(ctx, l.buildlog(level, custom, t, nil, STREAMLOG))
+						l.send(ctx, l.buildlog(level, custom, t, nil, streamlog))
 					default:
 						l.send(ctx, l.buildlog(level, custom, nil, nil, t))
 					}
