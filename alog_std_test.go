@@ -46,6 +46,26 @@ func Test_alog_global_defaults(t *testing.T) {
 	}
 }
 
+func Test_alog_Global(t *testing.T) {
+	if err := Global(
+		context.Background(),
+		"PREFIX",
+		"",
+		nil,
+		-1,
+	); err == nil {
+
+		t.Error("expected error but got success")
+	}
+}
+
+func Test_alog_setGlobal(t *testing.T) {
+	if err := setGlobal(nil); err == nil {
+
+		t.Error("expected error but got success")
+	}
+}
+
 func Test_alog_ln(t *testing.T) {
 	mock := &passmock{make(chan []byte)}
 

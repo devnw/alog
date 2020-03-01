@@ -77,20 +77,14 @@ var mutty = sync.Mutex{}
 var instance Logger
 
 func init() {
-	var err error
-
-	if err = Global(
+	_ = Global(
 		context.Background(), // Default context
 		"",                   // No prefix
 		DEFAULTTIMEFORMAT,    // Standard time format
 		time.UTC,             // UTC logging
 		DEFAULTBUFFER,        // Default buffer of 100 logs
 		Standards()...,       // Default destinations
-	); err != nil {
-
-		// Panic if the initialization fails
-		panic(err)
-	}
+	)
 }
 
 // setGlobal overrides the default logger using the passed in logger for the library
@@ -166,13 +160,8 @@ func New(ctx context.Context, prefix string, dateformat string, location *time.L
 		}
 
 		// initialize the go routines for reading the logs
-		if err = a.init(); err == nil {
-			logger = a
-		} else {
-			// cancel the context and error out the logger creation
-			defer a.cancel()
-			err = errors.Errorf("error occurred while initializing logger | %s", err)
-		}
+		a.init()
+		logger = a
 	} else {
 		err = errors.New("logger requires at least one destination")
 	}

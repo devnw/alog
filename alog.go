@@ -73,7 +73,7 @@ func (l *alog) clean(logtype LogLevel) {
 
 // init starts up the go routines for receiving and publishing logs
 // to the available io.Writers
-func (l *alog) init() (err error) {
+func (l *alog) init() {
 
 	// Startup the cleanup go routine to monitor for the closed context switch
 	go l.cleanup()
@@ -109,8 +109,6 @@ func (l *alog) init() (err error) {
 			l.customdests = append(l.customdests, l.listen(l.ctx, dest))
 		}
 	}
-
-	return err
 }
 
 func (l *alog) listen(ctx context.Context, destination Destination) chan<- log {
