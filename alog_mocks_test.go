@@ -19,8 +19,16 @@ func check(value []byte, expected string) (err error) {
 		output := string(value)
 
 		if strings.LastIndex(output, "\n") == len(output)-1 {
-			i := strings.Index(output, "[")
-			output = strings.TrimSpace(output[i:])
+
+			if strings.Contains(output, "PREFIX") {
+				begin := 7 // length of prefix
+				end := strings.Index(output, "[")
+				output = strings.TrimSpace(output[:begin] + output[end:])
+			} else {
+
+				i := strings.Index(output, "[")
+				output = strings.TrimSpace(output[i:])
+			}
 
 			if expected != output {
 				err = errors.Errorf("expected result: '%s' != output: '%s'", expected, output)
@@ -162,6 +170,57 @@ var logs = []fakelog{
 		"CUSTOM",
 		errors.New("CUSTOM"),
 		"[CUSTOM] CUSTOM | err: CUSTOM",
+	},
+}
+
+var prefixlogs = []fakelog{
+	{
+		INFO,
+		"INFO",
+		nil,
+		"PREFIX [INFO] INFO",
+	},
+	{
+		DEBUG,
+		"DEBUG",
+		errors.New("DEBUG"),
+		"PREFIX [DEBUG] DEBUG | err: DEBUG",
+	},
+	{
+		TRACE,
+		"TRACE",
+		errors.New("TRACE"),
+		"PREFIX [TRACE] TRACE | err: TRACE",
+	},
+	{
+		WARN,
+		"WARN",
+		errors.New("WARN"),
+		"PREFIX [WARN] WARN | err: WARN",
+	},
+	{
+		ERROR,
+		"ERROR",
+		errors.New("ERROR"),
+		"PREFIX [ERROR] ERROR | err: ERROR",
+	},
+	{
+		CRIT,
+		"CRIT",
+		errors.New("CRIT"),
+		"PREFIX [CRITICAL] CRIT | err: CRIT",
+	},
+	{
+		FATAL,
+		"FATAL",
+		errors.New("FATAL"),
+		"PREFIX [FATAL] FATAL | err: FATAL",
+	},
+	{
+		CUSTOM,
+		"CUSTOM",
+		errors.New("CUSTOM"),
+		"PREFIX [CUSTOM] CUSTOM | err: CUSTOM",
 	},
 }
 

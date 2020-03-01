@@ -5,6 +5,46 @@ import (
 	"testing"
 )
 
+func Test_alog_global_defaults(t *testing.T) {
+	mock := &passmock{make(chan []byte)}
+
+	dest := Destination{
+		lvls,
+		STD,
+		mock,
+	}
+
+	if err := Global(
+		nil,
+		"PREFIX",
+		"",
+		nil,
+		-1,
+		dest,
+	); err == nil {
+
+		for _, test := range prefixlogs {
+			if test.lvl&INFO > 0 {
+				Println(test.text)
+			} else if test.lvl&CUSTOM > 0 {
+				Customln("CUSTOM", test.err, test.text)
+			} else {
+				stdlns[test.lvl](test.err, test.text)
+			}
+
+			if log, ok := <-mock.msg; ok {
+				if err := check(log, test.expected); err != nil {
+					t.Error(err)
+				}
+			} else {
+				return
+			}
+		}
+
+		Close()
+	}
+}
+
 func Test_alog_ln(t *testing.T) {
 	mock := &passmock{make(chan []byte)}
 
