@@ -32,6 +32,11 @@
 // a logger in concurrent actions is a particular nuisance. For these cases the
 // c(channel) functions are a perfect use case. Each log level supports it's own
 // c(channel) function.
+//
+// alog currently support two log formatting types
+// * STD => Formats your logs using a "PREFIX DATE [LEVEL] Log | err: Error"
+// * JSON => Formats your logs using JSON in the following form
+// `{"prefix":"PREFIX","type":"ERROR","timestamp":"2020-03-01T16:21:28-06:00","error":"ERROR","messages":["ERROR"]}`
 package alog
 
 import (
@@ -239,7 +244,7 @@ func (l *alog) getd(level LogLevel) []chan<- log {
 	return destinations
 }
 
-func (l *alog) buildlog(logtype LogLevel, custom string, err error, format *string, v ...interface{}) (newlog log) {
+func (l *alog) buildlog(logtype LogLevel, custom string, err error, format *string, time time.Time, v ...interface{}) (newlog log) {
 
 	values := v
 	if format != nil {
@@ -250,7 +255,7 @@ func (l *alog) buildlog(logtype LogLevel, custom string, err error, format *stri
 		logger:     l,
 		logtype:    logtype,
 		customtype: custom,
-		timestamp:  time.Now(),
+		timestamp:  time,
 		err:        err,
 		values:     values,
 	}
@@ -270,9 +275,9 @@ func (l *alog) clog(ctx context.Context, v <-chan interface{}, level LogLevel, c
 				if ok {
 					switch t := value.(type) {
 					case error:
-						l.send(ctx, l.buildlog(level, custom, t, nil, streamlog))
+						l.send(ctx, l.buildlog(level, custom, t, nil, time.Now(), streamlog))
 					default:
-						l.send(ctx, l.buildlog(level, custom, nil, nil, t))
+						l.send(ctx, l.buildlog(level, custom, nil, nil, time.Now(), t))
 					}
 				} else {
 					return
@@ -290,26 +295,29 @@ func (l *alog) Printc(ctx context.Context, v <-chan interface{}) {
 
 // Print creates informational logs based on the inputs
 func (l *alog) Print(v ...interface{}) {
-	go l.send(l.ctx, l.buildlog(INFO, "", nil, nil, v...))
+	t := time.Now()
+	go l.send(l.ctx, l.buildlog(INFO, "", nil, nil, t, v...))
 }
 
 // Println prints the data coming in as an informational log on individual lines
 func (l *alog) Println(v ...interface{}) {
+	t := time.Now()
 	go func(v ...interface{}) {
 		if len(v) > 0 {
 
 			for _, value := range v {
-				l.send(l.ctx, l.buildlog(INFO, "", nil, nil, value))
+				l.send(l.ctx, l.buildlog(INFO, "", nil, nil, t, value))
 			}
 		} else {
-			l.send(l.ctx, l.buildlog(WARN, "", nil, nil, "empty log value passed"))
+			l.send(l.ctx, l.buildlog(WARN, "", nil, nil, t, "empty log value passed"))
 		}
 	}(v...)
 }
 
 // Printf creates an informational log using the format and values
 func (l *alog) Printf(format string, v ...interface{}) {
-	go l.send(l.ctx, l.buildlog(INFO, "", nil, &format, v...))
+	t := time.Now()
+	go l.send(l.ctx, l.buildlog(INFO, "", nil, &format, t, v...))
 }
 
 // Debugc creates debug logs based on the data coming from the
@@ -320,26 +328,29 @@ func (l *alog) Debugc(ctx context.Context, v <-chan interface{}) {
 
 // Debug creates debugging logs based on the inputs
 func (l *alog) Debug(err error, v ...interface{}) {
-	go l.send(l.ctx, l.buildlog(DEBUG, "", err, nil, v...))
+	t := time.Now()
+	go l.send(l.ctx, l.buildlog(DEBUG, "", err, nil, t, v...))
 }
 
 // Debugln prints the data coming in as a debug log on individual lines
 func (l *alog) Debugln(err error, v ...interface{}) {
+	t := time.Now()
 	go func(v ...interface{}) {
 		if len(v) > 0 {
 
 			for _, value := range v {
-				l.send(l.ctx, l.buildlog(DEBUG, "", err, nil, value))
+				l.send(l.ctx, l.buildlog(DEBUG, "", err, nil, t, value))
 			}
 		} else {
-			l.send(l.ctx, l.buildlog(WARN, "", nil, nil, "empty log value passed"))
+			l.send(l.ctx, l.buildlog(WARN, "", nil, nil, t, "empty log value passed"))
 		}
 	}(v...)
 }
 
 // Debugf creates an debugging log using the format and values
 func (l *alog) Debugf(err error, format string, v ...interface{}) {
-	go l.send(l.ctx, l.buildlog(DEBUG, "", err, &format, v...))
+	t := time.Now()
+	go l.send(l.ctx, l.buildlog(DEBUG, "", err, &format, t, v...))
 }
 
 // Tracec creates trace logs based on the data coming from the
@@ -350,26 +361,29 @@ func (l *alog) Tracec(ctx context.Context, v <-chan interface{}) {
 
 // Trace creates trace logs based on the inputs
 func (l *alog) Trace(err error, v ...interface{}) {
-	go l.send(l.ctx, l.buildlog(TRACE, "", err, nil, v...))
+	t := time.Now()
+	go l.send(l.ctx, l.buildlog(TRACE, "", err, nil, t, v...))
 }
 
 // Traceln prints the data coming in as a trace log on individual lines
 func (l *alog) Traceln(err error, v ...interface{}) {
+	t := time.Now()
 	go func(v ...interface{}) {
 		if len(v) > 0 {
 
 			for _, value := range v {
-				l.send(l.ctx, l.buildlog(TRACE, "", err, nil, value))
+				l.send(l.ctx, l.buildlog(TRACE, "", err, nil, t, value))
 			}
 		} else {
-			l.send(l.ctx, l.buildlog(WARN, "", nil, nil, "empty log value passed"))
+			l.send(l.ctx, l.buildlog(WARN, "", nil, nil, t, "empty log value passed"))
 		}
 	}(v...)
 }
 
 // Tracef creates an trace log using the format and values
 func (l *alog) Tracef(err error, format string, v ...interface{}) {
-	go l.send(l.ctx, l.buildlog(TRACE, "", err, &format, v...))
+	t := time.Now()
+	go l.send(l.ctx, l.buildlog(TRACE, "", err, &format, t, v...))
 }
 
 // Warnc creates warning logs based on the data coming from the
@@ -381,20 +395,22 @@ func (l *alog) Warnc(ctx context.Context, v <-chan interface{}) {
 // Warn creates a warning log using the error passed in along with the
 // values passed in
 func (l *alog) Warn(err error, v ...interface{}) {
-	go l.send(l.ctx, l.buildlog(WARN, "", err, nil, v...))
+	t := time.Now()
+	go l.send(l.ctx, l.buildlog(WARN, "", err, nil, t, v...))
 }
 
 // Warnln creates a warning log using the error and values passed in.
 // Each error and value is printed on a different line
 func (l *alog) Warnln(err error, v ...interface{}) {
+	t := time.Now()
 	go func(v ...interface{}) {
 		if len(v) > 0 {
 
 			for _, value := range v {
-				l.send(l.ctx, l.buildlog(WARN, "", err, nil, value))
+				l.send(l.ctx, l.buildlog(WARN, "", err, nil, t, value))
 			}
 		} else {
-			l.send(l.ctx, l.buildlog(WARN, "", nil, nil, "empty log value passed"))
+			l.send(l.ctx, l.buildlog(WARN, "", nil, nil, t, "empty log value passed"))
 		}
 	}(v...)
 }
@@ -402,7 +418,8 @@ func (l *alog) Warnln(err error, v ...interface{}) {
 // Warnf creates a warning log using the error passed in, along with the string
 // formatting and values
 func (l *alog) Warnf(err error, format string, v ...interface{}) {
-	go l.send(l.ctx, l.buildlog(WARN, "", err, &format, v...))
+	t := time.Now()
+	go l.send(l.ctx, l.buildlog(WARN, "", err, &format, t, v...))
 }
 
 // Errorc creates error logs based on the data coming from the
@@ -413,20 +430,22 @@ func (l *alog) Errorc(ctx context.Context, v <-chan interface{}) {
 
 // Error creates an error log using the error and other values passed in
 func (l *alog) Error(err error, v ...interface{}) {
-	go l.send(l.ctx, l.buildlog(ERROR, "", err, nil, v...))
+	t := time.Now()
+	go l.send(l.ctx, l.buildlog(ERROR, "", err, nil, t, v...))
 }
 
 // Errorln creates error logs using the error and other values passed in.
 // Each error and value is printed on a different line
 func (l *alog) Errorln(err error, v ...interface{}) {
+	t := time.Now()
 	go func(v ...interface{}) {
 		if len(v) > 0 {
 
 			for _, value := range v {
-				l.send(l.ctx, l.buildlog(ERROR, "", err, nil, value))
+				l.send(l.ctx, l.buildlog(ERROR, "", err, nil, t, value))
 			}
 		} else {
-			l.send(l.ctx, l.buildlog(WARN, "", nil, nil, "empty log value passed"))
+			l.send(l.ctx, l.buildlog(WARN, "", nil, nil, t, "empty log value passed"))
 		}
 	}(v...)
 }
@@ -434,7 +453,8 @@ func (l *alog) Errorln(err error, v ...interface{}) {
 // Errorf creates an error log using the error passed in, along with the string
 // formatting and values
 func (l *alog) Errorf(err error, format string, v ...interface{}) {
-	go l.send(l.ctx, l.buildlog(ERROR, "", err, &format, v...))
+	t := time.Now()
+	go l.send(l.ctx, l.buildlog(ERROR, "", err, &format, t, v...))
 }
 
 // Critc creates critical logs based on the data coming from the
@@ -445,20 +465,22 @@ func (l *alog) Critc(ctx context.Context, v <-chan interface{}) {
 
 // Crit creates critical logs using the error and other values passed in
 func (l *alog) Crit(err error, v ...interface{}) {
-	go l.send(l.ctx, l.buildlog(CRIT, "", err, nil, v...))
+	t := time.Now()
+	go l.send(l.ctx, l.buildlog(CRIT, "", err, nil, t, v...))
 }
 
 // Critln creates critical logs using the error and other values passed in.
 // Each error and value is printed on a different line
 func (l *alog) Critln(err error, v ...interface{}) {
+	t := time.Now()
 	go func(v ...interface{}) {
 		if len(v) > 0 {
 
 			for _, value := range v {
-				l.send(l.ctx, l.buildlog(CRIT, "", err, nil, value))
+				l.send(l.ctx, l.buildlog(CRIT, "", err, nil, t, value))
 			}
 		} else {
-			l.send(l.ctx, l.buildlog(WARN, "", nil, nil, "empty log value passed"))
+			l.send(l.ctx, l.buildlog(WARN, "", nil, nil, t, "empty log value passed"))
 		}
 	}(v...)
 }
@@ -466,7 +488,8 @@ func (l *alog) Critln(err error, v ...interface{}) {
 // Critf creates a critical log using the error passed in, along with the string
 // formatting and values
 func (l *alog) Critf(err error, format string, v ...interface{}) {
-	go l.send(l.ctx, l.buildlog(CRIT, "", err, &format, v...))
+	t := time.Now()
+	go l.send(l.ctx, l.buildlog(CRIT, "", err, &format, t, v...))
 }
 
 // Fatalc creates fatal logs based on the data coming from the
@@ -477,20 +500,22 @@ func (l *alog) Fatalc(ctx context.Context, v <-chan interface{}) {
 
 // Fatal creates a fatal log using the error and values passed into the method
 func (l *alog) Fatal(err error, v ...interface{}) {
-	go l.send(l.ctx, l.buildlog(FATAL, "", err, nil, v...))
+	t := time.Now()
+	go l.send(l.ctx, l.buildlog(FATAL, "", err, nil, t, v...))
 }
 
 // Fatalln creates fatal logs using the error and other values passed in.
 // Each error and value is printed on a different line
 func (l *alog) Fatalln(err error, v ...interface{}) {
+	t := time.Now()
 	go func(v ...interface{}) {
 		if len(v) > 0 {
 
 			for _, value := range v {
-				l.send(l.ctx, l.buildlog(FATAL, "", err, nil, value))
+				l.send(l.ctx, l.buildlog(FATAL, "", err, nil, t, value))
 			}
 		} else {
-			l.send(l.ctx, l.buildlog(WARN, "", nil, nil, "empty log value passed"))
+			l.send(l.ctx, l.buildlog(WARN, "", nil, nil, t, "empty log value passed"))
 		}
 	}(v...)
 }
@@ -498,7 +523,8 @@ func (l *alog) Fatalln(err error, v ...interface{}) {
 // Fatalf creates an error log using the error passed in, along with the string
 // formatting and values
 func (l *alog) Fatalf(err error, format string, v ...interface{}) {
-	go l.send(l.ctx, l.buildlog(FATAL, "", err, &format, v...))
+	t := time.Now()
+	go l.send(l.ctx, l.buildlog(FATAL, "", err, &format, t, v...))
 }
 
 // Customc creates custom logs based on the data coming from the
@@ -509,20 +535,22 @@ func (l *alog) Customc(ctx context.Context, v <-chan interface{}, ltype string) 
 
 // Custom creates a custom log using the error and values passed into the method
 func (l *alog) Custom(ltype string, err error, v ...interface{}) {
-	go l.send(l.ctx, l.buildlog(CUSTOM, ltype, err, nil, v...))
+	t := time.Now()
+	go l.send(l.ctx, l.buildlog(CUSTOM, ltype, err, nil, t, v...))
 }
 
 // Customln creates custom logs using the error and other values passed in.
 // Each error and value is printed on a different line
 func (l *alog) Customln(ltype string, err error, v ...interface{}) {
+	t := time.Now()
 	go func(v ...interface{}) {
 		if len(v) > 0 {
 
 			for _, value := range v {
-				l.send(l.ctx, l.buildlog(CUSTOM, ltype, err, nil, value))
+				l.send(l.ctx, l.buildlog(CUSTOM, ltype, err, nil, t, value))
 			}
 		} else {
-			l.send(l.ctx, l.buildlog(WARN, "", nil, nil, "empty log value passed"))
+			l.send(l.ctx, l.buildlog(WARN, "", nil, nil, t, "empty log value passed"))
 		}
 	}(v...)
 }
@@ -530,7 +558,8 @@ func (l *alog) Customln(ltype string, err error, v ...interface{}) {
 // Customf creates a custom log using the error passed in, along with the string
 // formatting and values
 func (l *alog) Customf(ltype string, err error, format string, v ...interface{}) {
-	go l.send(l.ctx, l.buildlog(CUSTOM, ltype, err, &format, v...))
+	t := time.Now()
+	go l.send(l.ctx, l.buildlog(CUSTOM, ltype, err, &format, t, v...))
 }
 
 // Close cancels the context of the logger internally and breaks out of
