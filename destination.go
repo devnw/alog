@@ -16,13 +16,13 @@ type Destination struct {
 
 // Standards returns the standard out and standard error destinations for
 // quick access when creating a logger
-// INFO, DEBUG, WARNING, CUSTOM Logs are logged to Standard Out
+// INFO, DEBUG, TRACE, WARNING, CUSTOM Logs are logged to Standard Out
 // ERROR, CRITICAL, FATAL Logs are logged to Standard Error
 func Standards() []Destination {
 
 	return []Destination{
 		{
-			INFO | DEBUG | WARN | CUSTOM,
+			INFO | DEBUG | TRACE | WARN | CUSTOM,
 			STD,
 			os.Stdout,
 		},
