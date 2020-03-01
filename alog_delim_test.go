@@ -8,7 +8,13 @@ import (
 func Test_alog_ln_DELIM(t *testing.T) {
 	mock := &passmock{make(chan []byte)}
 
-	if err := testg(nil, mock); err != nil {
+	dest := &Destination{
+		lvls,
+		DELIM,
+		mock,
+	}
+
+	if err := testg(dest, mock); err != nil {
 		t.Error(err)
 		return
 	}
@@ -23,6 +29,7 @@ func Test_alog_ln_DELIM(t *testing.T) {
 		}
 
 		if log, ok := <-mock.msg; ok {
+			t.Log(string(log))
 			if err := check(log, test.expected); err != nil {
 				t.Error(err)
 			}
@@ -37,7 +44,13 @@ func Test_alog_ln_DELIM(t *testing.T) {
 func Test_alog_ln_multi_DELIM(t *testing.T) {
 	mock := &passmock{make(chan []byte)}
 
-	if err := testg(nil, mock); err != nil {
+	dest := &Destination{
+		lvls,
+		DELIM,
+		mock,
+	}
+
+	if err := testg(dest, mock); err != nil {
 		t.Error(err)
 		return
 	}
@@ -70,7 +83,13 @@ func Test_alog_ln_multi_DELIM(t *testing.T) {
 func Test_alog_normal_DELIM(t *testing.T) {
 	mock := &passmock{make(chan []byte)}
 
-	if err := testg(nil, mock); err != nil {
+	dest := &Destination{
+		lvls,
+		DELIM,
+		mock,
+	}
+
+	if err := testg(dest, mock); err != nil {
 		t.Error(err)
 		return
 	}
@@ -99,7 +118,13 @@ func Test_alog_normal_DELIM(t *testing.T) {
 func Test_alog_multi_DELIM(t *testing.T) {
 	mock := &passmock{make(chan []byte)}
 
-	if err := testg(nil, mock); err != nil {
+	dest := &Destination{
+		lvls,
+		DELIM,
+		mock,
+	}
+
+	if err := testg(dest, mock); err != nil {
 		t.Error(err)
 		return
 	}
@@ -128,7 +153,13 @@ func Test_alog_multi_DELIM(t *testing.T) {
 func Test_alog_normalf_DELIM(t *testing.T) {
 	mock := &passmock{make(chan []byte)}
 
-	if err := testg(nil, mock); err != nil {
+	dest := &Destination{
+		lvls,
+		DELIM,
+		mock,
+	}
+
+	if err := testg(dest, mock); err != nil {
 		t.Error(err)
 		return
 	}
@@ -157,7 +188,13 @@ func Test_alog_normalf_DELIM(t *testing.T) {
 func Test_alog_chan_DELIM(t *testing.T) {
 	mock := &passmock{make(chan []byte)}
 
-	if err := testg(nil, mock); err != nil {
+	dest := &Destination{
+		lvls,
+		DELIM,
+		mock,
+	}
+
+	if err := testg(dest, mock); err != nil {
 		t.Error(err)
 		return
 	}
@@ -198,7 +235,13 @@ func Test_alog_chan_DELIM(t *testing.T) {
 func Test_alog_chan_err_DELIM(t *testing.T) {
 	mock := &passmock{make(chan []byte)}
 
-	if err := testg(nil, mock); err != nil {
+	dest := &Destination{
+		lvls,
+		DELIM,
+		mock,
+	}
+
+	if err := testg(dest, mock); err != nil {
 		t.Error(err)
 		return
 	}

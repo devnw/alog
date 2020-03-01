@@ -1,120 +1,8 @@
 package alog
 
-import (
-	"context"
-	"io"
-	"strings"
-	"time"
+import "github.com/pkg/errors"
 
-	"github.com/pkg/errors"
-)
-
-type passmock struct {
-	msg chan []byte
-}
-
-func check(value []byte, expected string) (err error) {
-	if len(value) > 0 {
-
-		output := string(value)
-
-		if strings.LastIndex(output, "\n") == len(output)-1 {
-			i := strings.Index(output, "[")
-			output = strings.TrimSpace(output[i:])
-
-			if expected != output {
-				err = errors.Errorf("expected result: '%s' != output: '%s'", expected, output)
-			}
-
-		} else {
-			err = errors.Errorf("expected newline at end of log")
-		}
-	} else {
-		err = errors.Errorf("value is empty")
-	}
-
-	return err
-}
-
-var lvls = INFO | DEBUG | TRACE | WARN | ERROR | CRIT | FATAL | CUSTOM
-
-func (pm *passmock) Write(p []byte) (n int, err error) {
-
-	n = len(p)
-	pm.msg <- p
-
-	return n, err
-}
-
-func testg(dest *Destination, w io.Writer) error {
-
-	if dest == nil {
-
-		if w == nil {
-			return errors.New("nil io.Writer passsed to testg")
-		}
-
-		dest = &Destination{
-			lvls,
-			STD,
-			w,
-		}
-	}
-	return Global(
-		context.Background(),
-		"",
-		DEFAULTTIMEFORMAT,
-		time.UTC,
-		DEFAULTBUFFER,
-		*dest,
-	)
-}
-
-var std = map[LogLevel]func(err error, v ...interface{}){
-	DEBUG: Debug,
-	TRACE: Trace,
-	WARN:  Warn,
-	ERROR: Error,
-	CRIT:  Crit,
-	FATAL: Fatal,
-}
-
-var stdlns = map[LogLevel]func(err error, v ...interface{}){
-	DEBUG: Debugln,
-	TRACE: Traceln,
-	WARN:  Warnln,
-	ERROR: Errorln,
-	CRIT:  Critln,
-	FATAL: Fatalln,
-}
-
-var stdfs = map[LogLevel]func(err error, format string, v ...interface{}){
-	DEBUG: Debugf,
-	TRACE: Tracef,
-	WARN:  Warnf,
-	ERROR: Errorf,
-	CRIT:  Critf,
-	FATAL: Fatalf,
-}
-
-var chanfs = map[LogLevel]func(ctx context.Context, v <-chan interface{}){
-	INFO:  Printc,
-	DEBUG: Debugc,
-	TRACE: Tracec,
-	WARN:  Warnc,
-	ERROR: Errorc,
-	CRIT:  Critc,
-	FATAL: Fatalc,
-}
-
-type fakelog struct {
-	lvl      LogLevel
-	text     string
-	err      error
-	expected string
-}
-
-var logs = []fakelog{
+var logsDELIM = []fakelog{
 	{
 		INFO,
 		"INFO",
@@ -165,7 +53,7 @@ var logs = []fakelog{
 	},
 }
 
-var cerrlogs = []fakelog{
+var cerrlogsDELIM = []fakelog{
 	{
 		DEBUG,
 		"DEBUG",
@@ -210,7 +98,7 @@ var cerrlogs = []fakelog{
 	},
 }
 
-var clogs = []fakelog{
+var clogsDELIM = []fakelog{
 	{
 		INFO,
 		"INFO",
@@ -261,7 +149,7 @@ var clogs = []fakelog{
 	},
 }
 
-var multi = []fakelog{
+var multiDELIM = []fakelog{
 	{
 		INFO,
 		"INFO",
@@ -312,7 +200,7 @@ var multi = []fakelog{
 	},
 }
 
-var flogs = []fakelog{
+var flogsDELIM = []fakelog{
 	{
 		INFO,
 		"INFO",
