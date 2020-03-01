@@ -199,6 +199,97 @@ var logsJSON = []fakelogJSON{
 	},
 }
 
+var prefixlogsJSON = []fakelogJSON{
+	{
+		INFO,
+		"INFO",
+		nil,
+		newjsonlog(
+			"PREFIX",
+			"INFO",
+			"",
+			"INFO",
+		),
+	},
+	{
+		DEBUG,
+		"DEBUG",
+		errors.New("DEBUG"),
+		newjsonlog(
+			"PREFIX",
+			"DEBUG",
+			"DEBUG",
+			"DEBUG",
+		),
+	},
+	{
+		TRACE,
+		"TRACE",
+		errors.New("TRACE"),
+		newjsonlog(
+			"PREFIX",
+			"TRACE",
+			"TRACE",
+			"TRACE",
+		),
+	},
+	{
+		WARN,
+		"WARN",
+		errors.New("WARN"),
+		newjsonlog(
+			"PREFIX",
+			"WARN",
+			"WARN",
+			"WARN",
+		),
+	},
+	{
+		ERROR,
+		"ERROR",
+		errors.New("ERROR"),
+		newjsonlog(
+			"PREFIX",
+			"ERROR",
+			"ERROR",
+			"ERROR",
+		),
+	},
+	{
+		CRIT,
+		"CRIT",
+		errors.New("CRIT"),
+		newjsonlog(
+			"PREFIX",
+			"CRITICAL",
+			"CRIT",
+			"CRIT",
+		),
+	},
+	{
+		FATAL,
+		"FATAL",
+		errors.New("FATAL"),
+		newjsonlog(
+			"PREFIX",
+			"FATAL",
+			"FATAL",
+			"FATAL",
+		),
+	},
+	{
+		CUSTOM,
+		"CUSTOM",
+		errors.New("CUSTOM"),
+		newjsonlog(
+			"PREFIX",
+			"CUSTOM",
+			"CUSTOM",
+			"CUSTOM",
+		),
+	},
+}
+
 var cerrlogsJSON = []fakelogJSON{
 	{
 		DEBUG,
