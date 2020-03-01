@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 )
 
 func Test_alog_global_defaults(t *testing.T) {
@@ -165,6 +166,75 @@ func Test_alog_nested(t *testing.T) {
 	} else {
 		return
 	}
+
+	Close()
+}
+
+func Test_alog_ctx_cancel(t *testing.T) {
+	mock := &passmock{make(chan []byte)}
+	ctx, cancel := context.WithCancel(context.Background())
+
+	dest := Destination{
+		lvls,
+		STD,
+		mock,
+	}
+
+	_ = Global(
+		ctx,
+		"",
+		DEFAULTTIMEFORMAT,
+		time.UTC,
+		DEFAULTBUFFER,
+		dest,
+	)
+
+	defer func() {
+		if r := recover(); r != nil {
+			t.Error("panic recovered in test")
+		}
+	}()
+
+	func() {
+		defer cancel()
+		Println("TEST")
+	}()
+
+	Close()
+}
+
+func Test_alog_write_close(t *testing.T) {
+	mock := &passmock{make(chan []byte)}
+
+	dest := Destination{
+		lvls,
+		STD,
+		mock,
+	}
+
+	_ = Global(
+		context.Background(),
+		"",
+		DEFAULTTIMEFORMAT,
+		time.UTC,
+		DEFAULTBUFFER,
+		dest,
+	)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	wchan := make(chan interface{})
+
+	Printc(ctx, wchan)
+
+	defer func() {
+		if r := recover(); r != nil {
+			t.Error("panic recovered in test")
+		}
+	}()
+
+	close(wchan)
 
 	Close()
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"sync"
 	"time"
 
@@ -498,12 +497,6 @@ func (l *alog) Customln(ltype string, err error, v ...interface{}) {
 // formatting and values
 func (l *alog) Customf(ltype string, err error, format string, v ...interface{}) {
 	go l.send(l.ctx, l.buildlog(CUSTOM, ltype, err, &format, v...))
-}
-
-// AddOutput adds an additional logging source to the logger which
-// will be added to the different logging outputs for this logger
-func (l *alog) AddOutput(out io.Writer) {
-
 }
 
 // Close cancels the context of the logger internally and breaks out of
