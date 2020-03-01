@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -14,9 +15,18 @@ type log struct {
 	timestamp  time.Time
 	err        error
 	values     interface{}
+	cache      string
+	mutty      sync.Mutex
 }
 
-func (l log) String() (output string) {
+func (l *log) String() (output string) {
+
+	l.mutty.Lock()
+	defer l.mutty.Unlock()
+
+	if l.cache != "" {
+		return l.cache
+	}
 
 	err := ""
 	if l.err != nil {
@@ -47,9 +57,11 @@ func (l log) String() (output string) {
 		err,
 	)
 
-	if !strings.Contains(output, "\n") {
+	if string(output[len(output)-1]) != "\n" {
 		output = fmt.Sprintf("%s\n", output)
 	}
+
+	l.cache = output
 
 	return output
 }
@@ -57,7 +69,7 @@ func (l log) String() (output string) {
 // getmessages breaks down the interface values and makes them
 // into string messages that can then be represented in the different
 // logging systems
-func (l log) getmessages(v interface{}) (messages []string) {
+func (l *log) getmessages(v interface{}) (messages []string) {
 	messages = make([]string, 0)
 
 	switch x := l.values.(type) {
@@ -79,7 +91,7 @@ func (l log) getmessages(v interface{}) (messages []string) {
 // intslice takes an interface slice which may contain additional interface
 // slices it to a singular interface slice so that it can be properly formatted
 // by the logger
-func (l log) intslice(v []interface{}) (flattened []interface{}) {
+func (l *log) intslice(v []interface{}) (flattened []interface{}) {
 
 	flattened = make([]interface{}, 0)
 	for _, value := range v {
@@ -96,7 +108,7 @@ func (l log) intslice(v []interface{}) (flattened []interface{}) {
 
 // getmessage type switches the interface coming in to get a proper
 // string value from each type based on the type selection
-func (l log) getmessage(v interface{}) (message string) {
+func (l *log) getmessage(v interface{}) (message string) {
 
 	switch field := v.(type) {
 	case string:
@@ -112,7 +124,7 @@ func (l log) getmessage(v interface{}) (message string) {
 
 // MarshalJSON is used by the json marshaller to properly break
 // down a log into a json struct for simpler parsing
-func (l log) MarshalJSON() ([]byte, error) {
+func (l *log) MarshalJSON() ([]byte, error) {
 
 	var err *string
 	if l.err != nil {
@@ -144,7 +156,7 @@ func (l log) MarshalJSON() ([]byte, error) {
 }
 
 // Type returns the type of the log for parsing or displaying
-func (l log) Type() (t string) {
+func (l *log) Type() (t string) {
 
 	if l.logtype&CUSTOM > 0 {
 		t = "CUSTOM"

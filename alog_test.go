@@ -6,7 +6,33 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/pkg/errors"
 )
+
+func check(value []byte, expected string) (err error) {
+
+	if len(value) > 0 {
+
+		output := string(value)
+
+		if strings.LastIndex(output, "\n") == len(output)-1 {
+			i := strings.Index(output, "[")
+			output = strings.TrimSpace(output[i:])
+
+			if expected != output {
+				err = errors.Errorf("expected result: '%s' != output: '%s'", expected, output)
+			}
+
+		} else {
+			err = errors.Errorf("expected newline at end of log")
+		}
+	} else {
+		err = errors.Errorf("value is empty")
+	}
+
+	return err
+}
 
 func Test_alog_global_ln(t *testing.T) {
 	mock := &passmock{make(chan []byte)}
@@ -52,18 +78,8 @@ func Test_alog_global_ln(t *testing.T) {
 			}
 
 			if log, ok := <-mock.msg; ok {
-				output := string(log)
-
-				if strings.LastIndex(output, "\n") == len(output)-1 {
-					i := strings.Index(output, "[")
-					output = strings.TrimSpace(output[i:])
-
-					if test.expected != output {
-						t.Errorf("expected result: '%s' != output: '%s'", test.expected, output)
-					}
-
-				} else {
-					t.Errorf("expected newline at end of log")
+				if err := check(log, test.expected); err != nil {
+					t.Error(err)
 				}
 			} else {
 				return
@@ -124,18 +140,8 @@ func Test_alog_global_ln_multi(t *testing.T) {
 			for i := 0; i < 2; i++ {
 
 				if log, ok := <-mock.msg; ok {
-					output := string(log)
-
-					if strings.LastIndex(output, "\n") == len(output)-1 {
-						i := strings.Index(output, "[")
-						output = strings.TrimSpace(output[i:])
-
-						if test.expected != output {
-							t.Errorf("expected result: '%s' != output: '%s'", test.expected, output)
-						}
-
-					} else {
-						t.Errorf("expected newline at end of log")
+					if err := check(log, test.expected); err != nil {
+						t.Error(err)
 					}
 				} else {
 					return
@@ -194,18 +200,8 @@ func Test_alog_global_normal(t *testing.T) {
 			}
 
 			if log, ok := <-mock.msg; ok {
-				output := string(log)
-
-				if strings.LastIndex(output, "\n") == len(output)-1 {
-					i := strings.Index(output, "[")
-					output = strings.TrimSpace(output[i:])
-
-					if test.expected != output {
-						t.Errorf("expected result: '%s' != output: '%s'", test.expected, output)
-					}
-
-				} else {
-					t.Errorf("expected newline at end of log")
+				if err := check(log, test.expected); err != nil {
+					t.Error(err)
 				}
 			} else {
 				return
@@ -263,18 +259,8 @@ func Test_alog_global_multi(t *testing.T) {
 			}
 
 			if log, ok := <-mock.msg; ok {
-				output := string(log)
-
-				if strings.LastIndex(output, "\n") == len(output)-1 {
-					i := strings.Index(output, "[")
-					output = strings.TrimSpace(output[i:])
-
-					if test.expected != output {
-						t.Errorf("expected result: '%s' != output: '%s'", test.expected, output)
-					}
-
-				} else {
-					t.Errorf("expected newline at end of log")
+				if err := check(log, test.expected); err != nil {
+					t.Error(err)
 				}
 			} else {
 				return
@@ -332,18 +318,8 @@ func Test_alog_global_normalf(t *testing.T) {
 			}
 
 			if log, ok := <-mock.msg; ok {
-				output := string(log)
-
-				if strings.LastIndex(output, "\n") == len(output)-1 {
-					i := strings.Index(output, "[")
-					output = strings.TrimSpace(output[i:])
-
-					if test.expected != output {
-						t.Errorf("expected result: '%s' != output: '%s'", test.expected, output)
-					}
-
-				} else {
-					t.Errorf("expected newline at end of log")
+				if err := check(log, test.expected); err != nil {
+					t.Error(err)
 				}
 			} else {
 				return
@@ -415,18 +391,8 @@ func Test_alog_global_chan(t *testing.T) {
 				}
 
 				if log, ok := <-mock.msg; ok {
-					output := string(log)
-
-					if strings.LastIndex(output, "\n") == len(output)-1 {
-						i := strings.Index(output, "[")
-						output = strings.TrimSpace(output[i:])
-
-						if test.expected != output {
-							t.Errorf("expected result: '%s' != output: '%s'", test.expected, output)
-						}
-
-					} else {
-						t.Errorf("expected newline at end of log")
+					if err := check(log, test.expected); err != nil {
+						t.Error(err)
 					}
 				} else {
 					return
@@ -498,18 +464,8 @@ func Test_alog_global_chan_err(t *testing.T) {
 					}
 
 					if log, ok := <-mock.msg; ok {
-						output := string(log)
-
-						if strings.LastIndex(output, "\n") == len(output)-1 {
-							i := strings.Index(output, "[")
-							output = strings.TrimSpace(output[i:])
-
-							if test.expected != output {
-								t.Errorf("expected result: '%s' != output: '%s'", test.expected, output)
-							}
-
-						} else {
-							t.Errorf("expected newline at end of log")
+						if err := check(log, test.expected); err != nil {
+							t.Error(err)
 						}
 					} else {
 						return
