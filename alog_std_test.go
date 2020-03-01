@@ -116,7 +116,7 @@ func Test_alog_interface(t *testing.T) {
 	Println(lg)
 
 	if log, ok := <-mock.msg; ok {
-		if err := check(log, fmt.Sprintf("[INFO] {INFO}")); err != nil {
+		if err := check(log, "[INFO] {INFO}"); err != nil {
 			t.Error(err)
 		}
 	} else {
