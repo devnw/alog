@@ -1,6 +1,6 @@
 # Fully concurrent, non-IO blocking Logger for Go
 
-![CI](https://github.com/benjivesterby/alog/workflows/CI/badge.svg)
+[![CI](https://github.com/benjivesterby/alog/workflows/CI/badge.svg)](https://github.com/benjivesterby/alog/actions)
 [![Go Report Card](https://goreportcard.com/badge/github.com/benjivesterby/alog)](https://goreportcard.com/report/github.com/benjivesterby/alog)
 [![codecov](https://codecov.io/gh/benjivesterby/alog/branch/master/graph/badge.svg)](https://codecov.io/gh/benjivesterby/alog)
 [![GoDoc](https://godoc.org/github.com/benjivesterby/alog?status.svg)](https://pkg.go.dev/github.com/benjivesterby/alog)
