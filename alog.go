@@ -16,14 +16,22 @@
 // interface which can be passed throughout an application as a logger.
 //
 // Each log level has an associated function:
-// * Print, Printf, Println, Printc 	=> INFO
-// * Debug, Debugf, Debugln, Debugc 	=> DEBUG
-// * Trace, Tracef, Traceln, Tracec		=> TRACE
-// * Warn, Warnf, Warnln, Warnc 		=> WARN
-// * Error, Errorf, Errorln, Errorc 	=> ERROR
-// * Crit, Critf, Critln, Critc 		=> CRITICAL
-// * Fatal, Fatalf, Fatalln, Fatalc 	=> FATAL
-// * Custom, Customf, Customln, Customc => CUSTOM Level
+//
+// INFO - Print, Printf, Println, Printc
+//
+// DEBUG - Debug, Debugf, Debugln, Debugc
+//
+// TRACE - Trace, Tracef, Traceln, Tracec
+//
+// WARN - Warn, Warnf, Warnln, Warnc
+//
+// ERROR - Error, Errorf, Errorln, Errorc
+//
+// CRITICAL - Crit, Critf, Critln, Critc
+//
+// FATAL - Fatal, Fatalf, Fatalln, Fatalc
+//
+// CUSTOM Level - Custom, Customf, Customln, Customc
 //
 // c(channel) functions are special methods in the logger that rather than being called
 // directly are passed a channel which receives logs into the logger in a
@@ -46,7 +54,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/benjivesterby/validator"
+	"github.com/devnw/validator"
 )
 
 // TODO: Setup so that new destinations can be added at runtime (chan Dest)
@@ -73,6 +81,7 @@ type alog struct {
 	// The channels which will have logs sent and received on
 	infodests   []chan<- log
 	debugdests  []chan<- log
+	tracedests  []chan<- log
 	warndests   []chan<- log
 	errdests    []chan<- log
 	critdests   []chan<- log
@@ -95,6 +104,7 @@ func (l *alog) cleanup() {
 	// Cleanup the destinations
 	l.clean(INFO)
 	l.clean(DEBUG)
+	l.clean(TRACE)
 	l.clean(WARN)
 	l.clean(ERROR)
 	l.clean(CRIT)
@@ -125,6 +135,11 @@ func (l *alog) init() {
 		if dest.Types&DEBUG > 0 {
 
 			l.debugdests = append(l.debugdests, l.listen(l.ctx, dest))
+		}
+
+		if dest.Types&TRACE > 0 {
+
+			l.tracedests = append(l.tracedests, l.listen(l.ctx, dest))
 		}
 
 		if dest.Types&WARN > 0 {
@@ -207,8 +222,9 @@ func (l *alog) send(ctx context.Context, value log) {
 
 		// Lock reads here while pulling channels
 		l.mutty.RLock()
-		dests := l.getd(value.logtype)
 		defer l.mutty.RUnlock()
+
+		dests := l.getd(value.logtype)
 
 		// Loop over the destinations for this logtype and push onto the
 		// log channels for each destination
@@ -229,6 +245,8 @@ func (l *alog) getd(level LogLevel) []chan<- log {
 
 	if level&DEBUG > 0 {
 		destinations = l.debugdests
+	} else if level&TRACE > 0 {
+		destinations = l.tracedests
 	} else if level&WARN > 0 {
 		destinations = l.warndests
 	} else if level&ERROR > 0 {
