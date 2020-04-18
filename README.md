@@ -36,14 +36,14 @@ interface which can be passed throughout an application as a logger.
 
 Each log level has an associated function:
 
-* Print, Printf, Println, Printc => INFO
-* Debug, Debugf, Debugln, Debugc => DEBUG
-* Trace, Tracef, Traceln, Tracec => TRACE
-* Warn, Warnf, Warnln, Warnc => WARN
-* Error, Errorf, Errorln, Errorc => ERROR
-* Crit, Critf, Critln, Critc => CRITICAL
-* Fatal, Fatalf, Fatalln, Fatalc => FATAL
-* Custom, Customf, Customln, Customc => CUSTOM Level
+* INFO - Print, Printf, Println, Printc
+* DEBUG - Debug, Debugf, Debugln, Debugc
+* TRACE - Trace, Tracef, Traceln, Tracec
+* WARN - Warn, Warnf, Warnln, Warnc
+* ERROR - Error, Errorf, Errorln, Errorc
+* CRITICAL - Crit, Critf, Critln, Critc
+* FATAL - Fatal, Fatalf, Fatalln, Fatalc
+* CUSTOM Level - Custom, Customf, Customln, Customc
 
 c(channel) functions are special methods in the logger that rather than being called
 directly are passed a channel which receives logs into the logger in a
@@ -59,7 +59,13 @@ This library currently support two log formatting types
 * JSON: Formats your logs using JSON in the following form
 
 ```json
-{"prefix":"PREFIX","type":"ERROR","timestamp":"2020-03-01T16:21:28-06:00","error":"Error Message","messages":["Log Message 1", "Log Message 2"]}
+{
+    "prefix":"PREFIX",
+    "type":"ERROR",
+    "timestamp":"2020-03-01T16:21:28-06:00",
+    "error":"Error Message",
+    "messages":["Log Message 1", "Log Message 2"]
+}
 ```
 
 Global Usage:
@@ -78,5 +84,6 @@ alog.Customln("CUSTOM", err, "debug log")
 ```
 
 For applications that want to ensure log completeness using `alog` execute
-`alog.Wait(bool)` when cleaning up your application so that the logger can correctly cleanup any lingering channels and Go routines. The boolean
+`alog.Wait(bool)` when cleaning up your application so that the logger can
+correctly cleanup any lingering channels and Go routines. The boolean
 parameter let's the wait method know if you want to also close the logger internally.
