@@ -22,7 +22,7 @@ log library. Internally messages are routed through a number of subscribed
 destinations consisting of destination log levels, timezone formatting
 strings and an io.Writer for the destination to be written to.
 
-The globaly available functions utilize a singleton implementation of a
+The globally available functions utilize a singleton implementation of a
 global logger that is initialized when the package is loaded. This global
 logger utilizes os.Stdout for INFO, DEBUG, TRACE, WARN, CUSTOM logs, and
 os.Stderr for ERROR, CRITICAL, FATAL as defined in the method Standard()
