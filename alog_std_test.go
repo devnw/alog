@@ -314,52 +314,6 @@ func Test_alog_sliced_string(t *testing.T) {
 	Close()
 }
 
-func Test_alog_empty(t *testing.T) {
-	mock := &passmock{make(chan []byte)}
-
-	if err := testg(nil, mock); err != nil {
-		t.Error(err)
-		return
-	}
-
-	Print()
-	checkunable(t, mock, INFO)
-
-	Debug(nil)
-	checkunable(t, mock, DEBUG)
-
-	Trace(nil)
-	checkunable(t, mock, TRACE)
-
-	Warn(nil)
-	checkunable(t, mock, WARN)
-
-	Error(nil)
-	checkunable(t, mock, ERROR)
-
-	Crit(nil)
-	checkunable(t, mock, CRIT)
-
-	Fatal(nil)
-	checkunable(t, mock, FATAL)
-
-	Custom("CUSTOM", nil)
-	checkunable(t, mock, CUSTOM)
-
-	Close()
-}
-
-func checkunable(t *testing.T, mock *passmock, level LogLevel) {
-
-	if log, ok := <-mock.msg; ok {
-		if err := check(log, fmt.Sprintf("[%s]unable to create log string, empty message and error", types[level])); err != nil {
-			t.Error(err)
-		}
-	} else {
-		return
-	}
-}
-
 func Test_alog_empty_ln(t *testing.T) {
 	mock := &passmock{make(chan []byte)}
 

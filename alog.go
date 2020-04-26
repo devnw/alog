@@ -177,28 +177,28 @@ func (l *alog) listen(ctx context.Context, destination Destination) chan<- log {
 				return
 			case l, ok := <-logs:
 				if ok {
-					if validator.Valid(l) {
-						var message string
+					if !validator.Valid(l) {
+						continue
+					}
 
-						switch destination.Format {
-						case JSON:
-							if msg, err := json.Marshal(l); err == nil {
+					var message string
 
-								// Add a newline to each json log for readability
-								message = string(msg) + "\n"
-							} else {
-								// TODO: panic?
-								panic("error marshalling JSON")
-							}
-						default:
-							message = l.String()
+					switch destination.Format {
+					case JSON:
+						if msg, err := json.Marshal(l); err == nil {
+
+							// Add a newline to each json log for readability
+							message = string(msg) + "\n"
+						} else {
+							// TODO: panic?
+							panic("error marshalling JSON")
 						}
+					default:
+						message = l.String()
+					}
 
-						if _, err := destination.Writer.Write([]byte(message)); err != nil {
-							panic("error writing to destination")
-						}
-					} else {
-						panic("invalid log at destination")
+					if _, err := destination.Writer.Write([]byte(message)); err != nil {
+						panic("error writing to destination")
 					}
 				} else {
 					return

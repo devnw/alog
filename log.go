@@ -160,3 +160,9 @@ func (l log) Type() (t string) {
 
 	return t
 }
+
+// Validate checks to see if a log is valid meaning it either has a
+// message or an error attached to it
+func (l log) Validate() bool {
+	return l.err != nil || len(l.getmessages(l.values)) > 0
+}
