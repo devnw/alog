@@ -43,6 +43,10 @@ func Standards() []Destination {
 // logs to the t.Error and the rest are routed to t.Log. These destinations
 // can be used to override the logger with destinations specific to testing.
 func TestDestinations(ctx context.Context, t *testing.T) []Destination {
+
+	ctx, cancel := context.WithCancel(ctx)
+	t.Cleanup(cancel)
+
 	return []Destination{
 		{
 			INFO | DEBUG | TRACE | WARN | CUSTOM,
