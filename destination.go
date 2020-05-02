@@ -1,6 +1,7 @@
 package alog
 
 import (
+	"context"
 	"io"
 	"os"
 	"testing"
@@ -41,12 +42,13 @@ func Standards() []Destination {
 // to the *testing.T that was passed in. This defaults all ERROR, CRIT, FATAL
 // logs to the t.Error and the rest are routed to t.Log. These destinations
 // can be used to override the logger with destinations specific to testing.
-func TestDestinations(t *testing.T) []Destination {
+func TestDestinations(ctx context.Context, t *testing.T) []Destination {
 	return []Destination{
 		{
 			INFO | DEBUG | TRACE | WARN | CUSTOM,
 			STD,
 			test{
+				ctx:  ctx,
 				t:    t,
 				mode: INFO | DEBUG | TRACE | WARN | CUSTOM,
 			},
@@ -55,6 +57,7 @@ func TestDestinations(t *testing.T) []Destination {
 			ERROR | CRIT | FATAL,
 			STD,
 			test{
+				ctx:  ctx,
 				t:    t,
 				mode: ERROR | CRIT | FATAL,
 			},
@@ -63,6 +66,7 @@ func TestDestinations(t *testing.T) []Destination {
 }
 
 type test struct {
+	ctx  context.Context
 	t    *testing.T
 	mode LogLevel
 }
@@ -72,11 +76,16 @@ func (t test) Write(p []byte) (int, error) {
 		return 0, errors.New("invalid test object")
 	}
 
-	msg := string(p)
-	if t.mode&(ERROR|CRIT|FATAL) > 0 {
-		t.t.Error(msg)
-	} else {
-		t.t.Log(msg)
+	select {
+	case <-t.ctx.Done():
+		return 0, nil
+	default:
+		msg := string(p)
+		if t.mode&(ERROR|CRIT|FATAL) > 0 {
+			t.t.Error(msg)
+		} else {
+			t.t.Log(msg)
+		}
 	}
 
 	return len(p), nil
