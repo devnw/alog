@@ -2,11 +2,11 @@ package alog
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"io"
 	"strings"
 	"time"
-
-	"github.com/pkg/errors"
 )
 
 type passmock struct {
@@ -14,34 +14,29 @@ type passmock struct {
 }
 
 func check(value []byte, expected string) (err error) {
-	if len(value) > 0 {
-
-		output := string(value)
-
-		if strings.LastIndex(output, "\n") == len(output)-1 {
-
-			if strings.Contains(output, "PREFIX") {
-				begin := 7 // length of prefix
-				end := strings.Index(output, "[")
-				output = strings.TrimSpace(output[:begin] + output[end:])
-			} else {
-
-				i := strings.Index(output, "[")
-				output = strings.TrimSpace(output[i:])
-			}
-
-			if expected != output {
-				err = errors.Errorf("expected result: '%s' != output: '%s'", expected, output)
-			}
-
-		} else {
-			err = errors.Errorf("expected newline at end of log")
-		}
-	} else {
-		err = errors.Errorf("value is empty")
+	if len(value) <= 0 {
+		return fmt.Errorf("value is empty")
 	}
 
-	return err
+	if value[len(value)-1] != '\n' {
+		return fmt.Errorf("expected newline at end of log")
+	}
+
+	output := string(value)
+	if strings.Contains(output, "PREFIX") {
+		begin := 7 // length of prefix
+		end := strings.Index(output, "[")
+		output = strings.TrimSpace(output[:begin] + output[end:])
+	} else {
+		i := strings.Index(output, "[")
+		output = strings.TrimSpace(output[i:])
+	}
+
+	if expected != output {
+		return fmt.Errorf("expected result: '%s' != output: '%s'", expected, output)
+	}
+
+	return nil
 }
 
 var lvls = INFO | DEBUG | TRACE | WARN | ERROR | CRIT | FATAL | CUSTOM

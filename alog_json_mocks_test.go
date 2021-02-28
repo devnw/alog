@@ -2,33 +2,35 @@ package alog
 
 import (
 	"encoding/json"
-	"strings"
+	"errors"
+	"fmt"
 
-	"github.com/pkg/errors"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 )
 
 func checkJSON(value []byte, expected jsonlogtest) (err error) {
 
-	if len(value) > 0 {
-
-		output := string(value)
-
-		if strings.LastIndex(output, "\n") == len(output)-1 {
-
-			received := jsonlogtest{}
-			if err = json.Unmarshal(value, &received); err == nil {
-				if !same(expected, received) {
-					err = errors.Errorf("expected: '%s' does not match received: '%s'", expected.String(), string(value))
-				}
-			}
-		} else {
-			err = errors.Errorf("expected newline at end of log")
-		}
-	} else {
-		err = errors.Errorf("value is empty")
+	if len(value) == 0 {
+		return fmt.Errorf("value is empty")
 	}
 
-	return err
+	if value[len(value)-1] != '\n' {
+		return fmt.Errorf("expected newline at end of log")
+	}
+
+	received := jsonlogtest{}
+	err = json.Unmarshal(value, &received)
+	if err != nil {
+		return err
+	}
+
+	diff, ok := same(expected, received)
+	if !ok {
+		return fmt.Errorf("expected same, but got \n %s", diff)
+	}
+
+	return nil
 }
 
 type fakelogJSON struct {
@@ -38,37 +40,18 @@ type fakelogJSON struct {
 	expected jsonlogtest
 }
 
-func same(obj1, obj2 jsonlogtest) (same bool) {
+func same(obj1, obj2 jsonlogtest) (string, bool) {
 
-	// Prefix check
-	if obj1.Prefix == nil &&
-		obj2.Prefix == nil ||
-		(obj1.Prefix != nil &&
-			obj2.Prefix != nil &&
-			strings.Compare(*obj1.Prefix, *obj2.Prefix) == 0) {
+	diff := cmp.Diff(
+		obj1,
+		obj2,
+		cmpopts.IgnoreFields(
+			jsonlogtest{},
+			"Timestamp",
+		),
+	)
 
-		if strings.Compare(obj1.LogType, obj2.LogType) == 0 {
-
-			if obj1.Error == nil &&
-				obj2.Error == nil ||
-				(obj1.Error != nil &&
-					obj2.Error != nil &&
-					strings.Compare(*obj1.Error, *obj2.Error) == 0) {
-
-				if len(obj1.Messages) == len(obj2.Messages) {
-					for i := range obj1.Messages {
-						if strings.Compare(obj1.Messages[i], obj2.Messages[i]) != 0 {
-							return
-						}
-					}
-
-					same = true
-				}
-			}
-		}
-	}
-
-	return same
+	return diff, diff == ""
 }
 
 type jsonlogtest struct {
@@ -87,7 +70,12 @@ func (j jsonlogtest) String() string {
 	}
 }
 
-func newjsonlog(pfix string, ltype string, err string, msgs ...string) jsonlogtest {
+func newjsonlog(
+	pfix string,
+	ltype string,
+	err string,
+	msgs ...string,
+) jsonlogtest {
 
 	var p *string
 	if len(pfix) > 0 {

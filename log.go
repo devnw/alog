@@ -149,21 +149,11 @@ func (l log) MarshalJSON() ([]byte, error) {
 // Type returns the type of the log for parsing or displaying
 func (l log) Type() (t string) {
 
-	if l.logtype&CUSTOM > 0 {
-		t = "CUSTOM"
-		if len(l.customtype) > 0 {
-			t = strings.ToUpper(l.customtype)
-		}
-	} else {
-		var ok bool
-		if t, ok = types[l.logtype]; !ok {
-
-			// Use INFO as default type
-			t = types[INFO]
-		}
+	if l.logtype&CUSTOM > 0 && l.customtype != "" {
+		return strings.ToUpper(l.customtype)
 	}
 
-	return t
+	return l.logtype.String()
 }
 
 // Validate checks to see if a log is valid meaning it either has a

@@ -7,11 +7,11 @@ package alog
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"time"
 
 	"devnw.com/validator"
-	"github.com/pkg/errors"
 )
 
 // LogFmt is the logging format
@@ -27,6 +27,16 @@ const (
 
 // LogLevel is the logging level for the logger
 type LogLevel int16
+
+func (l LogLevel) String() string {
+	t, ok := types[l]
+	if !ok {
+		// Default to INFO type for unknown log types
+		return types[INFO]
+	}
+
+	return t
+}
 
 // Log switches for sources setup using bitwise comparison
 const (
@@ -75,11 +85,10 @@ const (
 	DEFAULTTIMEFORMAT = time.RFC3339
 )
 
-var mutty = sync.Mutex{}
-
-// instance is the default logger for library include, this can be replaced by
-// a different default instance and is global to the library
-var instance Logger
+// global is the default logger for library include, this can be replaced by
+// a different default global and is global to the library
+var global Logger
+var globalMu = sync.Mutex{}
 
 func init() {
 	_ = Global(
@@ -96,15 +105,15 @@ func init() {
 // to facilitate simplified global logging
 func setGlobal(logger Logger) (err error) {
 	if validator.Valid(logger) {
-		mutty.Lock()
-		defer mutty.Unlock()
+		globalMu.Lock()
+		defer globalMu.Unlock()
 
 		// Close the logger instance and replace it
-		if instance != nil {
-			instance.Close()
+		if global != nil {
+			global.Close()
 		}
 
-		instance = logger
+		global = logger
 	} else {
 		err = errors.New("invalid logger")
 	}
@@ -112,21 +121,43 @@ func setGlobal(logger Logger) (err error) {
 	return err
 }
 
-// Global instantiates a new logger using the passed in parameters and overwrites
-// the package global instance of the logger
-func Global(ctx context.Context, prefix string, dateformat string, location *time.Location, buffer int, destinations ...Destination) (err error) {
-	var newLogger Logger
-	if newLogger, err = New(ctx, prefix, dateformat, location, buffer, destinations...); err == nil {
-		err = setGlobal(newLogger)
+// Global instantiates a new logger using the passed in parameters and
+// overwrites the package global instance of the logger
+func Global(
+	ctx context.Context,
+	prefix string,
+	dateformat string,
+	location *time.Location,
+	buffer int,
+	destinations ...Destination,
+) error {
+	newLogger, err := New(
+		ctx,
+		prefix,
+		dateformat,
+		location,
+		buffer,
+		destinations...,
+	)
+
+	if err != nil {
+		return err
 	}
 
-	return err
+	return setGlobal(newLogger)
 }
 
 // New creates a new logger using the information passed in to setup
 // the logging configuration rather than using the standard Stdout logger
 // that is initialized automatically
-func New(ctx context.Context, prefix string, dateformat string, location *time.Location, buffer int, destinations ...Destination) (logger Logger, err error) {
+func New(
+	ctx context.Context,
+	prefix string,
+	dateformat string,
+	location *time.Location,
+	buffer int,
+	destinations ...Destination,
+) (logger Logger, err error) {
 
 	if ctx == nil {
 		ctx = context.Background()
@@ -162,6 +193,16 @@ func New(ctx context.Context, prefix string, dateformat string, location *time.L
 			buffer:       buffer,
 			mutty:        sync.RWMutex{},
 			cleaned:      make(chan bool),
+			out: map[LogLevel][]chan<- log{
+				INFO:   make([]chan<- log, 0),
+				DEBUG:  make([]chan<- log, 0),
+				TRACE:  make([]chan<- log, 0),
+				WARN:   make([]chan<- log, 0),
+				ERROR:  make([]chan<- log, 0),
+				CRIT:   make([]chan<- log, 0),
+				FATAL:  make([]chan<- log, 0),
+				CUSTOM: make([]chan<- log, 0),
+			},
 		}
 
 		// initialize the go routines for reading the logs

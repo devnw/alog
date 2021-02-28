@@ -7,11 +7,10 @@ package alog
 
 import (
 	"context"
+	"errors"
 	"io"
 	"os"
 	"testing"
-
-	"github.com/pkg/errors"
 )
 
 // Destination is the destination struct for registering io.Writers to the

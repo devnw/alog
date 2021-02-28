@@ -3,53 +3,6 @@
 // This file is subject to the terms and conditions defined in
 // file 'LICENSE', which is part of this source code package.
 
-// Package alog is an implementation of a fully concurrent non-IO blocking
-// log library. Internally messages are routed through a number of subscribed
-// destinations consisting of destination log levels, timezone formatting
-// strings and an io.Writer for the destination to be written to.
-//
-// The globally available functions utilize a singleton implementation of a
-// global logger that is initialized when the package is loaded. This global
-// logger utilizes os.Stdout for INFO, DEBUG, TRACE, WARN, CUSTOM logs, and
-// os.Stderr for ERROR, CRITICAL, FATAL as defined in the method Standard()
-//
-// The global logger singleton can be overridden using the "Global" method
-// passing in the proper parameters as required by your use case.
-//
-// If you prefer to use a non-global singleton logger you can use the "New"
-// method to create a new logger which implements the alog packages "Logger"
-// interface which can be passed throughout an application as a logger.
-//
-// Each log level has an associated function:
-//
-// INFO - Print, Printf, Println, Printc
-//
-// DEBUG - Debug, Debugf, Debugln, Debugc
-//
-// TRACE - Trace, Tracef, Traceln, Tracec
-//
-// WARN - Warn, Warnf, Warnln, Warnc
-//
-// ERROR - Error, Errorf, Errorln, Errorc
-//
-// CRITICAL - Crit, Critf, Critln, Critc
-//
-// FATAL - Fatal, Fatalf, Fatalln, Fatalc
-//
-// CUSTOM Level - Custom, Customf, Customln, Customc
-//
-// c(channel) functions are special methods in the logger that rather than being called
-// directly are passed a channel which receives logs into the logger in a
-// concurrent manner without direct calls to the `c(channel) function` again afterwards.
-// These methods are particularly useful for applications where the overhead of
-// a logger in concurrent actions is a particular nuisance. For these cases the
-// c(channel) functions are a perfect use case. Each log level supports it's own
-// c(channel) function.
-//
-// alog currently support two log formatting types
-// * STD => Formats your logs using a "PREFIX DATE [LEVEL] Log | err: Error"
-// * JSON => Formats your logs using JSON in the following form
-// `{"prefix":"PREFIX","type":"ERROR","timestamp":"2020-03-01T16:21:28-06:00","error":"ERROR","messages":["ERROR"]}`
 package alog
 
 import (
@@ -65,7 +18,8 @@ import (
 // TODO: Setup so that new destinations can be added at runtime (chan Dest)
 // TODO: flag for stack traces on logs with errors?
 
-// streamlog is a constant for the log value of a streaming log when an error type is sent
+// streamlog is a constant for the log value of a streaming log when
+// an error type is sent
 const streamlog = "stream log"
 
 type alog struct {
@@ -73,25 +27,19 @@ type alog struct {
 	cancel       context.CancelFunc
 	destinations []Destination
 
-	// location is the timezone that is used for logging. Default: UTC
+	// location is the timezone that is used for logging.
+	// Default: UTC
 	location *time.Location
 
-	// dateformat is the date format that is used in the logging. Default: RFC3339
+	// dateformat is the date format that is used in the logging.
+	// Default: RFC3339
 	dateformat string
 	prefix     string
 	buffer     int
 
 	mutty sync.RWMutex
 
-	// The channels which will have logs sent and received on
-	infodests   []chan<- log
-	debugdests  []chan<- log
-	tracedests  []chan<- log
-	warndests   []chan<- log
-	errdests    []chan<- log
-	critdests   []chan<- log
-	fataldests  []chan<- log
-	customdests []chan<- log
+	out map[LogLevel][]chan<- log
 
 	// Indicates that all logs have been cleared to the respective
 	// destinations during a close
@@ -106,21 +54,33 @@ func (l *alog) cleanup() {
 	defer l.mutty.Unlock()
 	defer close(l.cleaned)
 
-	// Cleanup the destinations
-	l.clean(INFO)
-	l.clean(DEBUG)
-	l.clean(TRACE)
-	l.clean(WARN)
-	l.clean(ERROR)
-	l.clean(CRIT)
-	l.clean(FATAL)
-	l.clean(CUSTOM)
-}
+	// Loop over the destinations and close the channels
+	for _, destinations := range l.out {
 
-func (l *alog) clean(logtype LogLevel) {
-	// Loop over the destinations for this logtype and close the channels
-	for _, destination := range l.getd(logtype) {
-		close(destination)
+		for _, out := range destinations {
+			ctx, cancel := context.WithTimeout(
+				l.ctx,
+				time.Millisecond,
+			)
+
+			// Wait for the channel to empty or timeout
+			// to elapse, whichever is sooner
+			go func(
+				ctx context.Context,
+				cancel context.CancelFunc,
+				out chan<- log,
+			) {
+				defer close(out)
+				defer cancel()
+
+				for len(out) > 0 {
+					select {
+					case <-ctx.Done():
+					default:
+					}
+				}
+			}(ctx, cancel, out)
+		}
 	}
 }
 
@@ -128,48 +88,28 @@ func (l *alog) clean(logtype LogLevel) {
 // to the available io.Writers
 func (l *alog) init() {
 
-	// Startup the cleanup go routine to monitor for the closed context switch
+	// Startup the cleanup go routine to monitor
+	// for the closed context switch
 	go l.cleanup()
 
 	for _, dest := range l.destinations {
-		if dest.Types&INFO > 0 {
+		for level := range l.out {
+			if dest.Types&level <= 0 {
+				continue
+			}
 
-			l.infodests = append(l.infodests, l.listen(l.ctx, dest))
-		}
-
-		if dest.Types&DEBUG > 0 {
-
-			l.debugdests = append(l.debugdests, l.listen(l.ctx, dest))
-		}
-
-		if dest.Types&TRACE > 0 {
-
-			l.tracedests = append(l.tracedests, l.listen(l.ctx, dest))
-		}
-
-		if dest.Types&WARN > 0 {
-			l.warndests = append(l.warndests, l.listen(l.ctx, dest))
-		}
-
-		if dest.Types&ERROR > 0 {
-			l.errdests = append(l.errdests, l.listen(l.ctx, dest))
-		}
-
-		if dest.Types&CRIT > 0 {
-			l.critdests = append(l.critdests, l.listen(l.ctx, dest))
-		}
-
-		if dest.Types&FATAL > 0 {
-			l.fataldests = append(l.fataldests, l.listen(l.ctx, dest))
-		}
-
-		if dest.Types&CUSTOM > 0 {
-			l.customdests = append(l.customdests, l.listen(l.ctx, dest))
+			l.out[level] = append(
+				l.out[level],
+				l.listen(l.ctx, dest),
+			)
 		}
 	}
 }
 
-func (l *alog) listen(ctx context.Context, destination Destination) chan<- log {
+func (l *alog) listen(
+	ctx context.Context,
+	destination Destination,
+) chan<- log {
 	logs := make(chan log)
 
 	go func(ctx context.Context, logs <-chan log, destination Destination) {
@@ -178,35 +118,34 @@ func (l *alog) listen(ctx context.Context, destination Destination) chan<- log {
 		for {
 			select {
 			case <-ctx.Done():
-				// TODO: setup to close the destination if it has a close method
+				// TODO: setup to close the destination
+				// if it has a close method
 				return
 			case l, ok := <-logs:
-				if ok {
-					if !validator.Valid(l) {
-						continue
-					}
-
-					var message string
-
-					switch destination.Format {
-					case JSON:
-						if msg, err := json.Marshal(l); err == nil {
-
-							// Add a newline to each json log for readability
-							message = string(msg) + "\n"
-						} else {
-							// TODO: panic?
-							panic("error marshalling JSON")
-						}
-					default:
-						message = l.String()
-					}
-
-					if _, err := destination.Writer.Write([]byte(message)); err != nil {
-						panic("error writing to destination")
-					}
-				} else {
+				if !ok {
 					return
+				}
+
+				if !validator.Valid(l) {
+					continue
+				}
+
+				message := l.String()
+				if destination.Format == JSON {
+					msg, err := json.Marshal(l)
+					if err != nil {
+						// TODO: panic?
+						panic("error marshalling JSON")
+					}
+
+					// Add a newline to each json log for
+					// readability
+					message = string(msg) + "\n"
+				}
+
+				_, err := destination.Writer.Write([]byte(message))
+				if err != nil {
+					panic("error writing to destination")
 				}
 			}
 		}
@@ -229,11 +168,9 @@ func (l *alog) send(ctx context.Context, value log) {
 		l.mutty.RLock()
 		defer l.mutty.RUnlock()
 
-		dests := l.getd(value.logtype)
-
 		// Loop over the destinations for this logtype and push onto the
 		// log channels for each destination
-		for _, destination := range dests {
+		for _, destination := range l.out[value.logtype] {
 
 			// Push the log onto the destination channel
 			select {
@@ -245,29 +182,14 @@ func (l *alog) send(ctx context.Context, value log) {
 	}
 }
 
-func (l *alog) getd(level LogLevel) []chan<- log {
-	destinations := l.infodests
-
-	if level&DEBUG > 0 {
-		destinations = l.debugdests
-	} else if level&TRACE > 0 {
-		destinations = l.tracedests
-	} else if level&WARN > 0 {
-		destinations = l.warndests
-	} else if level&ERROR > 0 {
-		destinations = l.errdests
-	} else if level&CRIT > 0 {
-		destinations = l.critdests
-	} else if level&FATAL > 0 {
-		destinations = l.fataldests
-	} else if level&CUSTOM > 0 {
-		destinations = l.customdests
-	}
-
-	return destinations
-}
-
-func (l *alog) buildlog(logtype LogLevel, custom string, err error, format *string, time time.Time, v ...interface{}) (newlog log) {
+func (l *alog) buildlog(
+	logtype LogLevel,
+	custom string,
+	err error,
+	format *string,
+	time time.Time,
+	v ...interface{},
+) (newlog log) {
 
 	values := v
 	if format != nil {
@@ -286,28 +208,73 @@ func (l *alog) buildlog(logtype LogLevel, custom string, err error, format *stri
 	return newlog
 }
 
-func (l *alog) clog(ctx context.Context, v <-chan interface{}, level LogLevel, custom string) {
+func (l *alog) clog(
+	ctx context.Context,
+	v <-chan interface{},
+	level LogLevel,
+	custom string,
+) {
 
-	go func(ctx context.Context, v <-chan interface{}, level LogLevel, custom string) {
+	go func(
+		ctx context.Context,
+		v <-chan interface{},
+		level LogLevel,
+		custom string,
+	) {
 		// TODO: handle panic
 		for {
 			select {
 			case <-ctx.Done():
 				return
 			case value, ok := <-v:
-				if ok {
-					switch t := value.(type) {
-					case error:
-						l.send(ctx, l.buildlog(level, custom, t, nil, time.Now(), streamlog))
-					default:
-						l.send(ctx, l.buildlog(level, custom, nil, nil, time.Now(), t))
-					}
-				} else {
+				if !ok {
 					return
+				}
+
+				switch t := value.(type) {
+				case nil:
+				case error:
+					l.send(
+						ctx,
+						l.buildlog(
+							level,
+							custom,
+							t,
+							nil,
+							time.Now(),
+							streamlog,
+						),
+					)
+				default:
+					l.send(
+						ctx,
+						l.buildlog(
+							level,
+							custom,
+							nil,
+							nil,
+							time.Now(),
+							t,
+						),
+					)
 				}
 			}
 		}
 	}(ctx, v, level, custom)
+}
+
+func (l *alog) sendMultiLine(
+	level LogLevel,
+	err error,
+	values ...interface{},
+) {
+	t := time.Now()
+	for _, value := range values {
+		l.send(
+			l.ctx,
+			l.buildlog(level, "", err, nil, t, value),
+		)
+	}
 }
 
 // Printc creates informational logs based on the data coming from the
@@ -324,17 +291,7 @@ func (l *alog) Print(v ...interface{}) {
 
 // Println prints the data coming in as an informational log on individual lines
 func (l *alog) Println(v ...interface{}) {
-	t := time.Now()
-	go func(v ...interface{}) {
-		if len(v) > 0 {
-
-			for _, value := range v {
-				l.send(l.ctx, l.buildlog(INFO, "", nil, nil, t, value))
-			}
-		} else {
-			l.send(l.ctx, l.buildlog(WARN, "", nil, nil, t, "empty log value passed"))
-		}
-	}(v...)
+	go l.sendMultiLine(INFO, nil, v...)
 }
 
 // Printf creates an informational log using the format and values
@@ -357,17 +314,7 @@ func (l *alog) Debug(err error, v ...interface{}) {
 
 // Debugln prints the data coming in as a debug log on individual lines
 func (l *alog) Debugln(err error, v ...interface{}) {
-	t := time.Now()
-	go func(v ...interface{}) {
-		if len(v) > 0 {
-
-			for _, value := range v {
-				l.send(l.ctx, l.buildlog(DEBUG, "", err, nil, t, value))
-			}
-		} else {
-			l.send(l.ctx, l.buildlog(WARN, "", nil, nil, t, "empty log value passed"))
-		}
-	}(v...)
+	go l.sendMultiLine(DEBUG, err, v...)
 }
 
 // Debugf creates an debugging log using the format and values
@@ -390,17 +337,7 @@ func (l *alog) Trace(err error, v ...interface{}) {
 
 // Traceln prints the data coming in as a trace log on individual lines
 func (l *alog) Traceln(err error, v ...interface{}) {
-	t := time.Now()
-	go func(v ...interface{}) {
-		if len(v) > 0 {
-
-			for _, value := range v {
-				l.send(l.ctx, l.buildlog(TRACE, "", err, nil, t, value))
-			}
-		} else {
-			l.send(l.ctx, l.buildlog(WARN, "", nil, nil, t, "empty log value passed"))
-		}
-	}(v...)
+	go l.sendMultiLine(TRACE, err, v...)
 }
 
 // Tracef creates an trace log using the format and values
@@ -425,17 +362,7 @@ func (l *alog) Warn(err error, v ...interface{}) {
 // Warnln creates a warning log using the error and values passed in.
 // Each error and value is printed on a different line
 func (l *alog) Warnln(err error, v ...interface{}) {
-	t := time.Now()
-	go func(v ...interface{}) {
-		if len(v) > 0 {
-
-			for _, value := range v {
-				l.send(l.ctx, l.buildlog(WARN, "", err, nil, t, value))
-			}
-		} else {
-			l.send(l.ctx, l.buildlog(WARN, "", nil, nil, t, "empty log value passed"))
-		}
-	}(v...)
+	go l.sendMultiLine(WARN, err, v...)
 }
 
 // Warnf creates a warning log using the error passed in, along with the string
@@ -460,17 +387,7 @@ func (l *alog) Error(err error, v ...interface{}) {
 // Errorln creates error logs using the error and other values passed in.
 // Each error and value is printed on a different line
 func (l *alog) Errorln(err error, v ...interface{}) {
-	t := time.Now()
-	go func(v ...interface{}) {
-		if len(v) > 0 {
-
-			for _, value := range v {
-				l.send(l.ctx, l.buildlog(ERROR, "", err, nil, t, value))
-			}
-		} else {
-			l.send(l.ctx, l.buildlog(WARN, "", nil, nil, t, "empty log value passed"))
-		}
-	}(v...)
+	go l.sendMultiLine(ERROR, err, v...)
 }
 
 // Errorf creates an error log using the error passed in, along with the string
@@ -495,17 +412,7 @@ func (l *alog) Crit(err error, v ...interface{}) {
 // Critln creates critical logs using the error and other values passed in.
 // Each error and value is printed on a different line
 func (l *alog) Critln(err error, v ...interface{}) {
-	t := time.Now()
-	go func(v ...interface{}) {
-		if len(v) > 0 {
-
-			for _, value := range v {
-				l.send(l.ctx, l.buildlog(CRIT, "", err, nil, t, value))
-			}
-		} else {
-			l.send(l.ctx, l.buildlog(WARN, "", nil, nil, t, "empty log value passed"))
-		}
-	}(v...)
+	go l.sendMultiLine(CRIT, err, v...)
 }
 
 // Critf creates a critical log using the error passed in, along with the string
@@ -530,17 +437,7 @@ func (l *alog) Fatal(err error, v ...interface{}) {
 // Fatalln creates fatal logs using the error and other values passed in.
 // Each error and value is printed on a different line
 func (l *alog) Fatalln(err error, v ...interface{}) {
-	t := time.Now()
-	go func(v ...interface{}) {
-		if len(v) > 0 {
-
-			for _, value := range v {
-				l.send(l.ctx, l.buildlog(FATAL, "", err, nil, t, value))
-			}
-		} else {
-			l.send(l.ctx, l.buildlog(WARN, "", nil, nil, t, "empty log value passed"))
-		}
-	}(v...)
+	go l.sendMultiLine(FATAL, err, v...)
 }
 
 // Fatalf creates an error log using the error passed in, along with the string
@@ -567,13 +464,18 @@ func (l *alog) Custom(ltype string, err error, v ...interface{}) {
 func (l *alog) Customln(ltype string, err error, v ...interface{}) {
 	t := time.Now()
 	go func(v ...interface{}) {
-		if len(v) > 0 {
-
-			for _, value := range v {
-				l.send(l.ctx, l.buildlog(CUSTOM, ltype, err, nil, t, value))
-			}
-		} else {
-			l.send(l.ctx, l.buildlog(WARN, "", nil, nil, t, "empty log value passed"))
+		for _, value := range v {
+			l.send(
+				l.ctx,
+				l.buildlog(
+					CUSTOM,
+					ltype,
+					err,
+					nil,
+					t,
+					value,
+				),
+			)
 		}
 	}(v...)
 }
@@ -610,10 +512,10 @@ func (l *alog) Validate() (valid bool) {
 
 // Wait blocks on the logger context until the context is closed, if the close flag
 // is passed then the wait function will close the context of the logger
-func (l *alog) Wait(close bool) {
+func (l *alog) Wait(exit bool) {
 
 	// Cancel the context if indicated in the call
-	if close {
+	if exit {
 		l.Close()
 	}
 
