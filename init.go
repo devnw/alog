@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/devnw/validator"
+	"devnw.com/validator"
 	"github.com/pkg/errors"
 )
 

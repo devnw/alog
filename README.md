@@ -1,9 +1,9 @@
 # Fully concurrent, non-IO blocking Logger for Go
 
 [![CI](https://github.com/devnw/alog/workflows/CI/badge.svg)](https://github.com/devnw/alog/actions)
-[![Go Report Card](https://goreportcard.com/badge/github.com/devnw/alog)](https://goreportcard.com/report/github.com/devnw/alog)
+[![Go Report Card](https://goreportcard.com/badge/devnw.com/alog)](https://goreportcard.com/report/devnw.com/alog)
 [![codecov](https://codecov.io/gh/devnw/alog/branch/master/graph/badge.svg)](https://codecov.io/gh/devnw/alog)
-[![GoDoc](https://godoc.org/github.com/devnw/alog?status.svg)](https://pkg.go.dev/github.com/devnw/alog)
+[![Go Reference](https://pkg.go.dev/badge/devnw.com/alog.svg)](https://pkg.go.dev/devnw.com/alog)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
 
@@ -12,7 +12,7 @@
 Installation:
 
 ```go
-go get -u github.com/devnw/alog
+go get -u devnw.com/alog
 ```
 
 ## alog

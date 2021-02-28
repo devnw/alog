@@ -59,7 +59,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/devnw/validator"
+	"devnw.com/validator"
 )
 
 // TODO: Setup so that new destinations can be added at runtime (chan Dest)
