@@ -10,7 +10,6 @@ import (
 )
 
 func checkJSON(value []byte, expected jsonlogtest) (err error) {
-
 	if len(value) == 0 {
 		return fmt.Errorf("value is empty")
 	}
@@ -41,7 +40,6 @@ type fakelogJSON struct {
 }
 
 func same(obj1, obj2 jsonlogtest) (string, bool) {
-
 	diff := cmp.Diff(
 		obj1,
 		obj2,
@@ -64,7 +62,7 @@ type jsonlogtest struct {
 
 func (j jsonlogtest) String() string {
 	if out, err := json.Marshal(&j); err != nil {
-		panic("error marshalling jsonlogtest")
+		panic("error marshaling jsonlogtest")
 	} else {
 		return string(out)
 	}
@@ -76,7 +74,6 @@ func newjsonlog(
 	err string,
 	msgs ...string,
 ) jsonlogtest {
-
 	var p *string
 	if len(pfix) > 0 {
 		p = &pfix

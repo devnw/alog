@@ -193,6 +193,6 @@ func Close() {
 }
 
 // Wait blocks on the logger context until the context is closed
-func Wait(close bool) {
-	global.Wait(close)
+func Wait(exit bool) {
+	global.Wait(exit)
 }

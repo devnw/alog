@@ -40,7 +40,7 @@ func Test_alog_global_defaults(t *testing.T) {
 	}
 
 	err := Global(
-		nil,
+		context.TODO(),
 		"PREFIX",
 		"",
 		nil,
@@ -90,7 +90,6 @@ func Test_alog_setGlobal(t *testing.T) {
 }
 
 func Test_alog_ln(t *testing.T) {
-
 	mock := stdmock(t)
 	for _, test := range logs {
 		if test.lvl&INFO > 0 {
@@ -337,7 +336,6 @@ func Test_alog_normalf(t *testing.T) {
 func Test_alog_chan(t *testing.T) {
 	mock := stdmock(t)
 	for _, test := range clogs {
-
 		func() {
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
@@ -367,7 +365,6 @@ func Test_alog_chan_err(t *testing.T) {
 	mock := stdmock(t)
 
 	for _, test := range cerrlogs {
-
 		// Skip info for this test
 		if test.lvl&INFO == 0 {
 			func() {

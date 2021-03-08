@@ -158,7 +158,6 @@ func New(
 	buffer int,
 	destinations ...Destination,
 ) (logger Logger, err error) {
-
 	if ctx == nil {
 		ctx = context.Background()
 	}
@@ -167,7 +166,7 @@ func New(
 		location = time.UTC
 	}
 
-	if len(dateformat) == 0 {
+	if dateformat == "" {
 		dateformat = DEFAULTTIMEFORMAT
 	}
 
@@ -177,7 +176,6 @@ func New(
 	}
 
 	if len(destinations) >= 1 {
-
 		// Setup the logger context
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithCancel(ctx)
@@ -193,15 +191,15 @@ func New(
 			buffer:       buffer,
 			mutty:        sync.RWMutex{},
 			cleaned:      make(chan bool),
-			out: map[LogLevel][]chan<- log{
-				INFO:   make([]chan<- log, 0),
-				DEBUG:  make([]chan<- log, 0),
-				TRACE:  make([]chan<- log, 0),
-				WARN:   make([]chan<- log, 0),
-				ERROR:  make([]chan<- log, 0),
-				CRIT:   make([]chan<- log, 0),
-				FATAL:  make([]chan<- log, 0),
-				CUSTOM: make([]chan<- log, 0),
+			out: map[LogLevel][]chan<- *log{
+				INFO:   make([]chan<- *log, 0),
+				DEBUG:  make([]chan<- *log, 0),
+				TRACE:  make([]chan<- *log, 0),
+				WARN:   make([]chan<- *log, 0),
+				ERROR:  make([]chan<- *log, 0),
+				CRIT:   make([]chan<- *log, 0),
+				FATAL:  make([]chan<- *log, 0),
+				CUSTOM: make([]chan<- *log, 0),
 			},
 		}
 

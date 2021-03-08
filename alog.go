@@ -39,7 +39,7 @@ type alog struct {
 
 	mutty sync.RWMutex
 
-	out map[LogLevel][]chan<- log
+	out map[LogLevel][]chan<- *log
 
 	// Indicates that all logs have been cleared to the respective
 	// destinations during a close
@@ -56,7 +56,6 @@ func (l *alog) cleanup() {
 
 	// Loop over the destinations and close the channels
 	for _, destinations := range l.out {
-
 		for _, out := range destinations {
 			ctx, cancel := context.WithTimeout(
 				l.ctx,
@@ -68,7 +67,7 @@ func (l *alog) cleanup() {
 			go func(
 				ctx context.Context,
 				cancel context.CancelFunc,
-				out chan<- log,
+				out chan<- *log,
 			) {
 				defer close(out)
 				defer cancel()
@@ -87,7 +86,6 @@ func (l *alog) cleanup() {
 // init starts up the go routines for receiving and publishing logs
 // to the available io.Writers
 func (l *alog) init() {
-
 	// Startup the cleanup go routine to monitor
 	// for the closed context switch
 	go l.cleanup()
@@ -109,10 +107,10 @@ func (l *alog) init() {
 func (l *alog) listen(
 	ctx context.Context,
 	destination Destination,
-) chan<- log {
-	logs := make(chan log)
+) chan<- *log {
+	logs := make(chan *log)
 
-	go func(ctx context.Context, logs <-chan log, destination Destination) {
+	go func(ctx context.Context, logs <-chan *log, destination Destination) {
 		// TODO: handle panic
 
 		for {
@@ -135,7 +133,7 @@ func (l *alog) listen(
 					msg, err := json.Marshal(l)
 					if err != nil {
 						// TODO: panic?
-						panic("error marshalling JSON")
+						panic("error marshaling JSON")
 					}
 
 					// Add a newline to each json log for
@@ -156,14 +154,16 @@ func (l *alog) listen(
 
 // send is used to create a go routine thread for fanning out specific
 // log types to each of the destinations
-func (l *alog) send(ctx context.Context, value log) {
+func (l *alog) send(ctx context.Context, value *log) {
 	// TODO: Handle panic here
+	if value == nil {
+		return
+	}
 
-	// Break out in the event that the context has been cancelled
+	// Break out in the event that the context has been canceled
 	select {
 	case <-ctx.Done():
 	default:
-
 		// Lock reads here while pulling channels
 		l.mutty.RLock()
 		defer l.mutty.RUnlock()
@@ -171,7 +171,6 @@ func (l *alog) send(ctx context.Context, value log) {
 		// Loop over the destinations for this logtype and push onto the
 		// log channels for each destination
 		for _, destination := range l.out[value.logtype] {
-
 			// Push the log onto the destination channel
 			select {
 			case <-ctx.Done():
@@ -187,20 +186,19 @@ func (l *alog) buildlog(
 	custom string,
 	err error,
 	format *string,
-	time time.Time,
+	t time.Time,
 	v ...interface{},
-) (newlog log) {
-
+) (newlog *log) {
 	values := v
 	if format != nil {
 		values = []interface{}{fmt.Sprintf(*format, v...)}
 	}
 
-	newlog = log{
+	newlog = &log{
 		logger:     l,
 		logtype:    logtype,
 		customtype: custom,
-		timestamp:  time,
+		timestamp:  t,
 		err:        err,
 		values:     values,
 	}
@@ -214,7 +212,6 @@ func (l *alog) clog(
 	level LogLevel,
 	custom string,
 ) {
-
 	go func(
 		ctx context.Context,
 		v <-chan interface{},
@@ -492,7 +489,6 @@ func (l *alog) Customf(ltype string, err error, format string, v ...interface{})
 // level where the logger is initialized to ensure proper closure
 func (l *alog) Close() {
 	if validator.Valid(l) {
-
 		// cancel the context of the logger
 		l.cancel()
 	}
@@ -513,7 +509,6 @@ func (l *alog) Validate() (valid bool) {
 // Wait blocks on the logger context until the context is closed, if the close flag
 // is passed then the wait function will close the context of the logger
 func (l *alog) Wait(exit bool) {
-
 	// Cancel the context if indicated in the call
 	if exit {
 		l.Close()

@@ -74,7 +74,6 @@ func Test_alog_global_defaults_JSON(t *testing.T) {
 }
 
 func Test_alog_ln_JSON(t *testing.T) {
-
 	jsonhelper(t, func(mock *passmock) {
 		for _, test := range logsJSON {
 			if test.lvl&INFO > 0 {
@@ -103,7 +102,6 @@ func Test_alog_ln_multi_JSON(t *testing.T) {
 
 			// Loop twice since there should be two lines for each of these
 			for i := 0; i < 2; i++ {
-
 				jsoncheck(t, mock, test.expected)
 			}
 		}
@@ -161,7 +159,6 @@ func Test_alog_normalf_JSON(t *testing.T) {
 func Test_alog_chan_JSON(t *testing.T) {
 	jsonhelper(t, func(mock *passmock) {
 		for _, test := range clogsJSON {
-
 			func() {
 				ctx, cancel := context.WithCancel(context.Background())
 				defer cancel()
@@ -189,7 +186,6 @@ func Test_alog_chan_JSON(t *testing.T) {
 func Test_alog_chan_err_JSON(t *testing.T) {
 	jsonhelper(t, func(mock *passmock) {
 		for _, test := range cerrlogsJSON {
-
 			// Skip info for this test
 			if test.lvl&INFO == 0 {
 				func() {

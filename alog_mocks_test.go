@@ -14,7 +14,7 @@ type passmock struct {
 }
 
 func check(value []byte, expected string) (err error) {
-	if len(value) <= 0 {
+	if len(value) == 0 {
 		return fmt.Errorf("value is empty")
 	}
 
@@ -42,7 +42,6 @@ func check(value []byte, expected string) (err error) {
 var lvls = INFO | DEBUG | TRACE | WARN | ERROR | CRIT | FATAL | CUSTOM
 
 func (pm *passmock) Write(p []byte) (n int, err error) {
-
 	n = len(p)
 	pm.msg <- p
 
@@ -50,9 +49,7 @@ func (pm *passmock) Write(p []byte) (n int, err error) {
 }
 
 func testg(dest *Destination, w io.Writer) error {
-
 	if dest == nil {
-
 		if w == nil {
 			return errors.New("nil io.Writer passsed to testg")
 		}
