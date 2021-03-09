@@ -1,5 +1,6 @@
 devnw.com/validator v1.0.3 h1:SDtgLe/ebKQe54dwAu7fGKmjRYBFEPWYF5Lqb5smK/o=
 devnw.com/validator v1.0.3/go.mod h1:Z9GH0cjDxgmcAvpAh74ZRkmoB9OIroKFGboNa+Q3L3g=
+devnw.com/validator v1.0.4/go.mod h1:Z9GH0cjDxgmcAvpAh74ZRkmoB9OIroKFGboNa+Q3L3g=
 github.com/google/go-cmp v0.5.4 h1:L8R9j+yAqZuZjsqh/z+F1NCffTKKLShY6zXTItVIZ8M=
 github.com/google/go-cmp v0.5.4/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/gNBxE=
 golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543 h1:E7g+9GITq07hpfrRu66IVDexMakfv52eLZ2CXBWiKr4=
