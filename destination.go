@@ -6,8 +6,11 @@
 package alog
 
 import (
+	"context"
+	"errors"
 	"io"
 	"os"
+	"testing"
 )
 
 // Destination is the destination struct for registering io.Writers to the
@@ -38,78 +41,79 @@ func Standards() []Destination {
 	}
 }
 
-// TODO: When adding support for testing
-// // TestDestinations returns a list of destinations for logging test data
-// // to the *testing.T that was passed in. This defaults all ERROR, CRIT, FATAL
-// // logs to the t.Error and the rest are routed to t.Log. These destinations
-// // can be used to override the logger with destinations specific to testing.
-// func TestDestinations(ctx context.Context, t *testing.T) []Destination {
-// 	return []Destination{
-// 		{
-// 			INFO | DEBUG | TRACE | WARN | CUSTOM,
-// 			STD,
-// 			test{
-// 				ctx:  ctx,
-// 				t:    t,
-// 				mode: INFO | DEBUG | TRACE | WARN | CUSTOM,
-// 			},
-// 		},
-// 		{
-// 			ERROR | CRIT | FATAL,
-// 			STD,
-// 			test{
-// 				ctx:  ctx,
-// 				t:    t,
-// 				mode: ERROR | CRIT | FATAL,
-// 			},
-// 		},
-// 	}
-// }
+// TestDestinations returns a list of destinations for logging test data
+// to the *testing.T that was passed in. This defaults all ERROR, CRIT, FATAL
+// logs to the t.Error and the rest are routed to t.Log. These destinations
+// can be used to override the logger with destinations specific to testing.
+func TestDestinations(ctx context.Context, t *testing.T) []Destination {
+	return []Destination{
+		{
+			INFO | DEBUG | TRACE | WARN | CUSTOM,
+			STD,
+			test{
+				ctx:  ctx,
+				t:    t,
+				mode: INFO | DEBUG | TRACE | WARN | CUSTOM,
+			},
+		},
+		{
+			ERROR | CRIT | FATAL,
+			STD,
+			test{
+				ctx:  ctx,
+				t:    t,
+				mode: ERROR | CRIT | FATAL,
+			},
+		},
+	}
+}
 
-// type test struct {
-// 	ctx  context.Context
-// 	t    *testing.T
-// 	mode LogLevel
-// }
+type test struct {
+	ctx  context.Context
+	t    *testing.T
+	mode LogLevel
+}
 
-// func (t test) Write(p []byte) (int, error) {
-// 	if t.t == nil {
-// 		return 0, errors.New("invalid test object")
-// 	}
+func (t test) Write(p []byte) (int, error) {
+	if t.t == nil {
+		return 0, errors.New("invalid test object")
+	}
 
-// 	select {
-// 	case <-t.ctx.Done():
-// 		return 0, nil
-// 	default:
-// 		msg := string(p)
-// 		if t.mode&(ERROR|CRIT|FATAL) > 0 {
-// 			t.t.Error(msg)
-// 		} else {
-// 			t.t.Log(msg)
-// 		}
-// 	}
+	select {
+	case <-t.ctx.Done():
+		return 0, nil
+	default:
+		msg := string(p)
+		if t.mode&FATAL > 0 {
+			t.t.Fatal(msg)
+		} else if t.mode&(ERROR|CRIT) > 0 {
+			t.t.Error(msg)
+		} else {
+			t.t.Log(msg)
+		}
+	}
 
-// 	return len(p), nil
-// }
+	return len(p), nil
+}
 
-// // BenchDestinations returns a list of destinations for benchmarking.
-// // The destination returned from this method does NOTHING. It is meant
-// // to remove overhead from the logger for proper benchmarks.
-// // This destination can be used to override the logger for benchmarking.
-// func BenchDestinations() []Destination {
-// 	return []Destination{
-// 		{
-// 			INFO | DEBUG | TRACE | WARN |
-// 				CUSTOM | ERROR | CRIT | FATAL,
-// 			STD,
-// 			bench{},
-// 		},
-// 	}
-// }
+// BenchDestinations returns a list of destinations for benchmarking.
+// The destination returned from this method does NOTHING. It is meant
+// to remove overhead from the logger for proper benchmarks.
+// This destination can be used to override the logger for benchmarking.
+func BenchDestinations() []Destination {
+	return []Destination{
+		{
+			INFO | DEBUG | TRACE | WARN |
+				CUSTOM | ERROR | CRIT | FATAL,
+			STD,
+			bench{},
+		},
+	}
+}
 
-// type bench struct {
-// }
+type bench struct {
+}
 
-// func (bench) Write(p []byte) (int, error) {
-// 	return len(p), nil
-// }
+func (bench) Write(p []byte) (int, error) {
+	return len(p), nil
+}
