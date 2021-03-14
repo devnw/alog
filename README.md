@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/devnw/alog/workflows/CI/badge.svg)](https://github.com/devnw/alog/actions)
 [![Go Report Card](https://goreportcard.com/badge/devnw.com/alog)](https://goreportcard.com/report/devnw.com/alog)
-[![codecov](https://codecov.io/gh/devnw/alog/branch/master/graph/badge.svg)](https://codecov.io/gh/devnw/alog)
+[![codecov](https://codecov.io/gh/devnw/alog/branch/main/graph/badge.svg)](https://codecov.io/gh/devnw/alog)
 [![Go Reference](https://pkg.go.dev/badge/devnw.com/alog.svg)](https://pkg.go.dev/devnw.com/alog)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
