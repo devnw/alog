@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"devnw.com/validator"
+	"go.devnw.com/validator"
 )
 
 // LogFmt is the logging format

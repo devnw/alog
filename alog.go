@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"devnw.com/validator"
+	"go.devnw.com/validator"
 )
 
 // TODO: Setup so that new destinations can be added at runtime (chan Dest)
