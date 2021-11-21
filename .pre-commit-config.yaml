@@ -11,8 +11,8 @@ repos:
     rev: v1.43.0
     hooks:
     -   id: golangci-lint
--   repo: git://github.com/Bahjat/pre-commit-golang
-    rev: c3086eea8af86847dbdff2e46b85a5fe3c9d9656
+-   repo: git://github.com/Bahjat/pre-commit-golang    
+    rev: c3086eea8af86847dbdff2e46b85a5fe3c9d9656 # pragma: allowlist secret
     hooks:
       - id: go-unit-tests
 -   repo: https://github.com/pre-commit/pre-commit-hooks
